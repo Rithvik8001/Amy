@@ -24,7 +24,7 @@ const solutions = [
 export default function Solution() {
   return (
     <section className="px-6 py-20">
-      <div className="max-w-3xl mx-auto space-y-16">
+      <div className="max-w-4xl mx-auto space-y-16">
         {solutions.map((solution, index) => (
           <SolutionItem
             key={index}
