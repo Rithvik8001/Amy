@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { UserButton } from "@clerk/nextjs";
 import { ModeToggle } from "@/components/theme-toggle";
 import Link from "next/link";
+import SubscriptionsList from "@/components/subscriptions/subscriptions-list";
 
 export default async function DashboardPage() {
   const user = await currentUser();
@@ -36,12 +37,7 @@ export default async function DashboardPage() {
         </div>
 
         <div className="space-y-6">
-          {/* Placeholder for subscriptions list */}
-          <div className="border rounded-xl p-8 text-center">
-            <p className="text-muted-foreground">
-              Your subscriptions will appear here
-            </p>
-          </div>
+          <SubscriptionsList />
         </div>
       </main>
     </div>
