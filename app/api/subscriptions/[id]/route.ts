@@ -1,6 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
-import { eq, and } from "drizzle-orm";
+import { eq, and, sql } from "drizzle-orm";
 import db from "@/db/config";
 import { subscriptions } from "@/db/models/subscriptions";
 import { updateSubscriptionSchema } from "@/lib/validations/subscription";
@@ -78,6 +78,11 @@ export async function PUT(
 
     const body = await request.json();
 
+    // If no fields to update, return existing subscription
+    if (Object.keys(body).length === 0) {
+      return NextResponse.json(existingSubscription[0]);
+    }
+
     // Validate request body with Zod
     const validationResult = updateSubscriptionSchema.safeParse(body);
 
@@ -94,9 +99,7 @@ export async function PUT(
     const updateData = validationResult.data;
 
     // Build update object (only include provided fields)
-    const updateValues: Partial<typeof subscriptions.$inferInsert> = {
-      updatedAt: new Date(),
-    };
+    const updateValues: Record<string, unknown> = {};
 
     if (updateData.name !== undefined) updateValues.name = updateData.name;
     if (updateData.cost !== undefined)
@@ -112,9 +115,18 @@ export async function PUT(
     if (updateData.paymentMethod !== undefined)
       updateValues.paymentMethod = updateData.paymentMethod || null;
 
+    // Only update updatedAt if there are actual changes
+    if (Object.keys(updateValues).length === 0) {
+      // No changes, return existing subscription
+      return NextResponse.json(existingSubscription[0]);
+    }
+
     const updatedSubscription = await db
       .update(subscriptions)
-      .set(updateValues)
+      .set({
+        ...updateValues,
+        updatedAt: sql`now()`,
+      })
       .where(
         and(
           eq(subscriptions.id, parseInt(params.id)),
@@ -127,7 +139,10 @@ export async function PUT(
   } catch (error) {
     console.error("Error updating subscription:", error);
     return NextResponse.json(
-      { error: "Failed to update subscription" },
+      {
+        error: "Failed to update subscription",
+        details: error instanceof Error ? error.message : "Unknown error",
+      },
       { status: 500 }
     );
   }

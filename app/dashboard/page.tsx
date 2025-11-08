@@ -4,6 +4,7 @@ import { UserButton } from "@clerk/nextjs";
 import { ModeToggle } from "@/components/theme-toggle";
 import Link from "next/link";
 import SubscriptionsList from "@/components/subscriptions/subscriptions-list";
+import AddSubscriptionButton from "@/components/subscriptions/add-subscription-button";
 
 export default async function DashboardPage() {
   const user = await currentUser();
@@ -27,13 +28,16 @@ export default async function DashboardPage() {
       </nav>
 
       <main className="flex-1 px-6 py-8">
-        <div className="mb-8">
-          <h2 className="text-3xl font-bold mb-2">
-            Welcome back{user.firstName ? `, ${user.firstName}` : ""}!
-          </h2>
-          <p className="text-muted-foreground">
-            Manage all your subscriptions in one place
-          </p>
+        <div className="mb-8 flex items-center justify-between">
+          <div>
+            <h2 className="text-3xl font-bold mb-2">
+              Welcome back{user.firstName ? `, ${user.firstName}` : ""}!
+            </h2>
+            <p className="text-muted-foreground">
+              Manage all your subscriptions in one place
+            </p>
+          </div>
+          <AddSubscriptionButton />
         </div>
 
         <div className="space-y-6">

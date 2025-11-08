@@ -1,10 +1,18 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardFooter,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { Calendar, CreditCard } from "lucide-react";
+import EditSubscriptionDialog from "./edit-subscription-dialog";
+import DeleteSubscriptionDialog from "./delete-subscription-dialog";
 
 type Subscription = {
   id: number;
@@ -25,10 +33,6 @@ export default function SubscriptionsList() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchSubscriptions();
-  }, []);
-
   const fetchSubscriptions = async () => {
     try {
       setLoading(true);
@@ -38,12 +42,17 @@ export default function SubscriptionsList() {
       }
       const data = await response.json();
       setSubscriptions(data);
+      setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchSubscriptions();
+  }, []);
 
   if (loading) {
     return (
@@ -155,6 +164,16 @@ export default function SubscriptionsList() {
               )}
             </div>
           </CardContent>
+          <CardFooter className="flex justify-end gap-2 border-t pt-4">
+            <EditSubscriptionDialog
+              subscription={subscription}
+              onSuccess={fetchSubscriptions}
+            />
+            <DeleteSubscriptionDialog
+              subscription={subscription}
+              onSuccess={fetchSubscriptions}
+            />
+          </CardFooter>
         </Card>
       ))}
     </div>
