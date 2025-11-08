@@ -1,6 +1,10 @@
 import { SignIn } from "@clerk/nextjs";
 
-export default function SignInPage() {
+export default function SignInPage({
+  searchParams,
+}: {
+  searchParams: { redirect_url?: string };
+}) {
   return (
     <div className="min-h-screen flex flex-col max-w-5xl w-full mx-auto border-l border-r border-gray-200 dark:border-gray-900">
       <div className="flex-1 flex items-center justify-center px-6 py-12">
@@ -35,6 +39,7 @@ export default function SignInPage() {
             routing="path"
             path="/sign-in"
             signUpUrl="/sign-up"
+            afterSignInUrl={searchParams.redirect_url || "/dashboard"}
           />
         </div>
       </div>
