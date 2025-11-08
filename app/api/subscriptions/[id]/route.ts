@@ -8,7 +8,7 @@ import { updateSubscriptionSchema } from "@/lib/validations/subscription";
 // GET /api/subscriptions/[id] - Get single subscription
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> | { id: string } }
 ) {
   try {
     const { userId } = await auth();
@@ -17,12 +17,23 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    // Handle both sync and async params (Next.js 15+)
+    const resolvedParams = await Promise.resolve(params);
+    const subscriptionId = parseInt(resolvedParams.id);
+
+    if (isNaN(subscriptionId)) {
+      return NextResponse.json(
+        { error: "Invalid subscription ID" },
+        { status: 400 }
+      );
+    }
+
     const subscription = await db
       .select()
       .from(subscriptions)
       .where(
         and(
-          eq(subscriptions.id, parseInt(params.id)),
+          eq(subscriptions.id, subscriptionId),
           eq(subscriptions.userId, userId)
         )
       )
@@ -48,7 +59,7 @@ export async function GET(
 // PUT /api/subscriptions/[id] - Update subscription
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> | { id: string } }
 ) {
   try {
     const { userId } = await auth();
@@ -57,13 +68,24 @@ export async function PUT(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    // Handle both sync and async params (Next.js 15+)
+    const resolvedParams = await Promise.resolve(params);
+    const subscriptionId = parseInt(resolvedParams.id);
+
+    if (isNaN(subscriptionId)) {
+      return NextResponse.json(
+        { error: "Invalid subscription ID" },
+        { status: 400 }
+      );
+    }
+
     // Check if subscription exists and belongs to user
     const existingSubscription = await db
       .select()
       .from(subscriptions)
       .where(
         and(
-          eq(subscriptions.id, parseInt(params.id)),
+          eq(subscriptions.id, subscriptionId),
           eq(subscriptions.userId, userId)
         )
       )
@@ -129,19 +151,40 @@ export async function PUT(
       })
       .where(
         and(
-          eq(subscriptions.id, parseInt(params.id)),
+          eq(subscriptions.id, subscriptionId),
           eq(subscriptions.userId, userId)
         )
       )
       .returning();
 
+    if (updatedSubscription.length === 0) {
+      return NextResponse.json(
+        { error: "Failed to update subscription - no rows affected" },
+        { status: 500 }
+      );
+    }
+
     return NextResponse.json(updatedSubscription[0]);
   } catch (error) {
     console.error("Error updating subscription:", error);
+
+    // Provide more detailed error information
+    const errorMessage =
+      error instanceof Error
+        ? error.message
+        : typeof error === "string"
+        ? error
+        : "Unknown error";
+
+    const errorStack = error instanceof Error ? error.stack : undefined;
+
     return NextResponse.json(
       {
         error: "Failed to update subscription",
-        details: error instanceof Error ? error.message : "Unknown error",
+        details: errorMessage,
+        ...(process.env.NODE_ENV === "development" && errorStack
+          ? { stack: errorStack }
+          : {}),
       },
       { status: 500 }
     );
@@ -151,7 +194,7 @@ export async function PUT(
 // DELETE /api/subscriptions/[id] - Delete subscription
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> | { id: string } }
 ) {
   try {
     const { userId } = await auth();
@@ -160,13 +203,24 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    // Handle both sync and async params (Next.js 15+)
+    const resolvedParams = await Promise.resolve(params);
+    const subscriptionId = parseInt(resolvedParams.id);
+
+    if (isNaN(subscriptionId)) {
+      return NextResponse.json(
+        { error: "Invalid subscription ID" },
+        { status: 400 }
+      );
+    }
+
     // Check if subscription exists and belongs to user
     const existingSubscription = await db
       .select()
       .from(subscriptions)
       .where(
         and(
-          eq(subscriptions.id, parseInt(params.id)),
+          eq(subscriptions.id, subscriptionId),
           eq(subscriptions.userId, userId)
         )
       )
@@ -183,7 +237,7 @@ export async function DELETE(
       .delete(subscriptions)
       .where(
         and(
-          eq(subscriptions.id, parseInt(params.id)),
+          eq(subscriptions.id, subscriptionId),
           eq(subscriptions.userId, userId)
         )
       );

@@ -1,13 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardFooter,
-} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { Calendar, CreditCard } from "lucide-react";
@@ -56,16 +49,11 @@ export default function SubscriptionsList() {
 
   if (loading) {
     return (
-      <div className="space-y-4">
+      <div className="space-y-6">
         {[1, 2, 3].map((i) => (
-          <Card key={i} className="animate-pulse">
-            <CardHeader>
-              <div className="h-6 bg-muted rounded w-1/3"></div>
-            </CardHeader>
-            <CardContent>
-              <div className="h-4 bg-muted rounded w-1/2"></div>
-            </CardContent>
-          </Card>
+          <div key={i} className="animate-pulse">
+            <div className="h-20 bg-muted/30 rounded-lg"></div>
+          </div>
         ))}
       </div>
     );
@@ -73,28 +61,22 @@ export default function SubscriptionsList() {
 
   if (error) {
     return (
-      <Card>
-        <CardContent className="pt-6">
-          <p className="text-destructive text-center">{error}</p>
-        </CardContent>
-      </Card>
+      <div className="py-12 text-center">
+        <p className="text-destructive">{error}</p>
+      </div>
     );
   }
 
   if (subscriptions.length === 0) {
     return (
-      <Card>
-        <CardContent className="pt-6">
-          <div className="text-center py-12">
-            <p className="text-muted-foreground text-lg mb-2">
-              No subscriptions yet
-            </p>
-            <p className="text-muted-foreground text-sm">
-              Add your first subscription to get started
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="py-16 text-center">
+        <p className="text-muted-foreground text-lg mb-1">
+          No subscriptions yet
+        </p>
+        <p className="text-muted-foreground text-sm">
+          Add your first subscription to get started
+        </p>
+      </div>
     );
   }
 
@@ -116,65 +98,70 @@ export default function SubscriptionsList() {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {subscriptions.map((subscription) => (
-        <Card key={subscription.id}>
-          <CardHeader>
-            <div className="flex items-start justify-between">
-              <div className="flex-1">
-                <CardTitle className="text-xl mb-2">
+        <div
+          key={subscription.id}
+          className="group py-4 hover:bg-muted/20 transition-colors rounded-lg px-2 -mx-2 cursor-pointer"
+        >
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-3 mb-2">
+                <h3 className="text-lg font-semibold truncate">
                   {subscription.name}
-                </CardTitle>
-                <div className="flex flex-wrap gap-2 items-center">
-                  <Badge variant={getStatusColor(subscription.status)}>
-                    {subscription.status}
+                </h3>
+                <Badge
+                  variant={getStatusColor(subscription.status)}
+                  className="text-xs shrink-0"
+                >
+                  {subscription.status}
+                </Badge>
+                {subscription.category && (
+                  <Badge variant="outline" className="text-xs shrink-0">
+                    {subscription.category}
                   </Badge>
-                  {subscription.category && (
-                    <Badge variant="outline">{subscription.category}</Badge>
-                  )}
-                </div>
+                )}
               </div>
+              <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+                <div className="flex items-center gap-1.5">
+                  <Calendar className="w-3.5 h-3.5" />
+                  <span>
+                    {format(
+                      new Date(subscription.nextBillingDate),
+                      "MMM dd, yyyy"
+                    )}
+                  </span>
+                </div>
+                {subscription.paymentMethod && (
+                  <div className="flex items-center gap-1.5">
+                    <CreditCard className="w-3.5 h-3.5" />
+                    <span>{subscription.paymentMethod}</span>
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="flex items-center gap-3 shrink-0">
               <div className="text-right">
-                <div className="text-2xl font-bold">
+                <div className="text-xl font-semibold">
                   {formatCurrency(subscription.cost)}
                 </div>
-                <div className="text-sm text-muted-foreground">
+                <div className="text-xs text-muted-foreground">
                   /{subscription.billingCycle}
                 </div>
               </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <Calendar className="w-4 h-4" />
-                <span>
-                  Next billing:{" "}
-                  {format(
-                    new Date(subscription.nextBillingDate),
-                    "MMM dd, yyyy"
-                  )}
-                </span>
+              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <EditSubscriptionDialog
+                  subscription={subscription}
+                  onSuccess={fetchSubscriptions}
+                />
+                <DeleteSubscriptionDialog
+                  subscription={subscription}
+                  onSuccess={fetchSubscriptions}
+                />
               </div>
-              {subscription.paymentMethod && (
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <CreditCard className="w-4 h-4" />
-                  <span>{subscription.paymentMethod}</span>
-                </div>
-              )}
             </div>
-          </CardContent>
-          <CardFooter className="flex justify-end gap-2 border-t pt-4">
-            <EditSubscriptionDialog
-              subscription={subscription}
-              onSuccess={fetchSubscriptions}
-            />
-            <DeleteSubscriptionDialog
-              subscription={subscription}
-              onSuccess={fetchSubscriptions}
-            />
-          </CardFooter>
-        </Card>
+          </div>
+        </div>
       ))}
     </div>
   );

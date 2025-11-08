@@ -149,9 +149,8 @@ export default function EditSubscriptionDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
-          <Pencil className="w-4 h-4 mr-2" />
-          Edit
+        <Button variant="ghost" size="icon" className="h-8 w-8">
+          <Pencil className="w-4 h-4" />
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[500px]">

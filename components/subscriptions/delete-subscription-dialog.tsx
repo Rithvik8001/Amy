@@ -68,9 +68,8 @@ export default function DeleteSubscriptionDialog({
   return (
     <AlertDialog open={open} onOpenChange={setOpen}>
       <AlertDialogTrigger asChild>
-        <Button variant="outline" size="sm">
-          <Trash2 className="w-4 h-4 mr-2" />
-          Delete
+        <Button variant="ghost" size="icon" className="h-8 w-8">
+          <Trash2 className="w-4 h-4" />
         </Button>
       </AlertDialogTrigger>
       <AlertDialogContent>

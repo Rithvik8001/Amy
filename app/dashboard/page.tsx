@@ -13,36 +13,43 @@ export default async function DashboardPage() {
     redirect("/sign-in");
   }
 
+  const userName = user.firstName || user.username || "User";
+
   return (
-    <div className="min-h-screen flex flex-col max-w-5xl w-full mx-auto border-l border-r border-gray-200 dark:border-gray-900">
-      <nav className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 border-b">
-        <div className="flex items-center justify-between px-6 py-4">
-          <Link href="/dashboard">
-            <h1 className="text-4xl font-lavishly-yours cursor-pointer">Amy</h1>
-          </Link>
-          <div className="flex items-center gap-3">
-            <UserButton />
-            <ModeToggle />
+    <div className="min-h-screen bg-background">
+      <nav className="sticky top-0 z-50 bg-background/80 backdrop-blur-sm">
+        <div className="max-w-2xl mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            <Link href="/dashboard">
+              <h1 className="text-3xl font-lavishly-yours cursor-pointer">
+                Amy
+              </h1>
+            </Link>
+            <div className="flex items-center gap-4">
+              <span className="text-sm text-muted-foreground hidden sm:block">
+                {userName}
+              </span>
+              <ModeToggle />
+              <UserButton />
+            </div>
           </div>
         </div>
       </nav>
 
-      <main className="flex-1 px-6 py-8">
-        <div className="mb-8 flex items-center justify-between">
+      <main className="max-w-2xl mx-auto px-6 py-8">
+        <div className="mb-12 flex items-center justify-between">
           <div>
-            <h2 className="text-3xl font-bold mb-2">
-              Welcome back{user.firstName ? `, ${user.firstName}` : ""}!
+            <h2 className="text-2xl font-semibold mb-1">
+              Welcome back{user.firstName ? `, ${user.firstName}` : ""}
             </h2>
-            <p className="text-muted-foreground">
+            <p className="text-sm text-muted-foreground">
               Manage all your subscriptions in one place
             </p>
           </div>
           <AddSubscriptionButton />
         </div>
 
-        <div className="space-y-6">
-          <SubscriptionsList />
-        </div>
+        <SubscriptionsList />
       </main>
     </div>
   );
