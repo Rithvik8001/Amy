@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { Calendar, CreditCard } from "lucide-react";
 import EditSubscriptionDialog from "./edit-subscription-dialog";
 import DeleteSubscriptionDialog from "./delete-subscription-dialog";
+import SubscriptionFilters from "./subscription-filters";
 
 type Subscription = {
   id: number;
@@ -21,10 +22,27 @@ type Subscription = {
   updatedAt: Date | string;
 };
 
+type SortOption = "name" | "cost-asc" | "cost-desc" | "date-asc" | "date-desc";
+
+type FilterValues = {
+  search: string;
+  status: "all" | "active" | "cancelled" | "paused";
+  category: string;
+  billingCycle: "all" | "monthly" | "yearly";
+  sort: SortOption;
+};
+
 export default function SubscriptionsList() {
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [filters, setFilters] = useState<FilterValues>({
+    search: "",
+    status: "all",
+    category: "all",
+    billingCycle: "all",
+    sort: "name",
+  });
 
   const fetchSubscriptions = async () => {
     try {
@@ -46,6 +64,70 @@ export default function SubscriptionsList() {
   useEffect(() => {
     fetchSubscriptions();
   }, []);
+
+  // Get unique categories from subscriptions
+  const categories = useMemo(() => {
+    const cats = subscriptions
+      .map((sub) => sub.category)
+      .filter((cat): cat is string => cat !== null && cat !== "");
+    return Array.from(new Set(cats)).sort();
+  }, [subscriptions]);
+
+  // Filter and sort subscriptions
+  const filteredAndSortedSubscriptions = useMemo(() => {
+    let filtered = [...subscriptions];
+
+    // Search filter
+    if (filters.search) {
+      const searchLower = filters.search.toLowerCase();
+      filtered = filtered.filter((sub) =>
+        sub.name.toLowerCase().includes(searchLower)
+      );
+    }
+
+    // Status filter
+    if (filters.status !== "all") {
+      filtered = filtered.filter((sub) => sub.status === filters.status);
+    }
+
+    // Category filter
+    if (filters.category !== "all") {
+      filtered = filtered.filter((sub) => sub.category === filters.category);
+    }
+
+    // Billing cycle filter
+    if (filters.billingCycle !== "all") {
+      filtered = filtered.filter(
+        (sub) => sub.billingCycle === filters.billingCycle
+      );
+    }
+
+    // Sort
+    filtered.sort((a, b) => {
+      switch (filters.sort) {
+        case "name":
+          return a.name.localeCompare(b.name);
+        case "cost-asc":
+          return parseFloat(a.cost) - parseFloat(b.cost);
+        case "cost-desc":
+          return parseFloat(b.cost) - parseFloat(a.cost);
+        case "date-asc":
+          return (
+            new Date(a.nextBillingDate).getTime() -
+            new Date(b.nextBillingDate).getTime()
+          );
+        case "date-desc":
+          return (
+            new Date(b.nextBillingDate).getTime() -
+            new Date(a.nextBillingDate).getTime()
+          );
+        default:
+          return 0;
+      }
+    });
+
+    return filtered;
+  }, [subscriptions, filters]);
 
   if (loading) {
     return (
@@ -98,71 +180,90 @@ export default function SubscriptionsList() {
   };
 
   return (
-    <div className="space-y-6">
-      {subscriptions.map((subscription) => (
-        <div
-          key={subscription.id}
-          className="group py-4 hover:bg-muted/20 transition-colors rounded-lg px-2 -mx-2 cursor-pointer"
-        >
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-3 mb-2">
-                <h3 className="text-lg font-semibold truncate">
-                  {subscription.name}
-                </h3>
-                <Badge
-                  variant={getStatusColor(subscription.status)}
-                  className="text-xs shrink-0"
-                >
-                  {subscription.status}
-                </Badge>
-                {subscription.category && (
-                  <Badge variant="outline" className="text-xs shrink-0">
-                    {subscription.category}
-                  </Badge>
-                )}
-              </div>
-              <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
-                <div className="flex items-center gap-1.5">
-                  <Calendar className="w-3.5 h-3.5" />
-                  <span>
-                    {format(
-                      new Date(subscription.nextBillingDate),
-                      "MMM dd, yyyy"
-                    )}
-                  </span>
-                </div>
-                {subscription.paymentMethod && (
-                  <div className="flex items-center gap-1.5">
-                    <CreditCard className="w-3.5 h-3.5" />
-                    <span>{subscription.paymentMethod}</span>
-                  </div>
-                )}
-              </div>
-            </div>
-            <div className="flex items-center gap-3 shrink-0">
-              <div className="text-right">
-                <div className="text-xl font-semibold">
-                  {formatCurrency(subscription.cost)}
-                </div>
-                <div className="text-xs text-muted-foreground">
-                  /{subscription.billingCycle}
-                </div>
-              </div>
-              <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                <EditSubscriptionDialog
-                  subscription={subscription}
-                  onSuccess={fetchSubscriptions}
-                />
-                <DeleteSubscriptionDialog
-                  subscription={subscription}
-                  onSuccess={fetchSubscriptions}
-                />
-              </div>
-            </div>
-          </div>
+    <>
+      <SubscriptionFilters
+        filters={filters}
+        onFiltersChange={setFilters}
+        categories={categories}
+      />
+
+      {filteredAndSortedSubscriptions.length === 0 ? (
+        <div className="py-16 text-center">
+          <p className="text-muted-foreground text-lg mb-1">
+            No subscriptions match your filters
+          </p>
+          <p className="text-muted-foreground text-sm">
+            Try adjusting your search or filters
+          </p>
         </div>
-      ))}
-    </div>
+      ) : (
+        <div className="space-y-6">
+          {filteredAndSortedSubscriptions.map((subscription) => (
+            <div
+              key={subscription.id}
+              className="group py-4 hover:bg-muted/20 transition-colors rounded-lg px-2 -mx-2 cursor-pointer"
+            >
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-3 mb-2">
+                    <h3 className="text-lg font-semibold truncate">
+                      {subscription.name}
+                    </h3>
+                    <Badge
+                      variant={getStatusColor(subscription.status)}
+                      className="text-xs shrink-0"
+                    >
+                      {subscription.status}
+                    </Badge>
+                    {subscription.category && (
+                      <Badge variant="outline" className="text-xs shrink-0">
+                        {subscription.category}
+                      </Badge>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+                    <div className="flex items-center gap-1.5">
+                      <Calendar className="w-3.5 h-3.5" />
+                      <span>
+                        {format(
+                          new Date(subscription.nextBillingDate),
+                          "MMM dd, yyyy"
+                        )}
+                      </span>
+                    </div>
+                    {subscription.paymentMethod && (
+                      <div className="flex items-center gap-1.5">
+                        <CreditCard className="w-3.5 h-3.5" />
+                        <span>{subscription.paymentMethod}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 shrink-0">
+                  <div className="text-right">
+                    <div className="text-xl font-semibold">
+                      {formatCurrency(subscription.cost)}
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      /{subscription.billingCycle}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <EditSubscriptionDialog
+                      subscription={subscription}
+                      onSuccess={fetchSubscriptions}
+                    />
+                    <DeleteSubscriptionDialog
+                      subscription={subscription}
+                      onSuccess={fetchSubscriptions}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </>
   );
 }
