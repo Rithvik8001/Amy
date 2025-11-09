@@ -7,6 +7,7 @@ import { Calendar, CreditCard } from "lucide-react";
 import EditSubscriptionDialog from "./edit-subscription-dialog";
 import DeleteSubscriptionDialog from "./delete-subscription-dialog";
 import SubscriptionFilters from "./subscription-filters";
+import { motion, AnimatePresence } from "motion/react";
 
 type Subscription = {
   id: number;
@@ -198,70 +199,82 @@ export default function SubscriptionsList() {
         </div>
       ) : (
         <div className="space-y-6">
-          {filteredAndSortedSubscriptions.map((subscription) => (
-            <div
-              key={subscription.id}
-              className="group py-4 hover:bg-muted/20 transition-colors rounded-lg px-2 -mx-2 cursor-pointer"
-            >
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-3 mb-2">
-                    <h3 className="text-lg font-semibold truncate">
-                      {subscription.name}
-                    </h3>
-                    <Badge
-                      variant={getStatusColor(subscription.status)}
-                      className="text-xs shrink-0"
-                    >
-                      {subscription.status}
-                    </Badge>
-                    {subscription.category && (
-                      <Badge variant="outline" className="text-xs shrink-0">
-                        {subscription.category}
+          <AnimatePresence mode="popLayout">
+            {filteredAndSortedSubscriptions.map((subscription, index) => (
+              <motion.div
+                key={subscription.id}
+                className="group py-4 hover:bg-muted/20 transition-colors rounded-lg px-2 -mx-2 cursor-pointer"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, x: -20, scale: 0.95 }}
+                transition={{ 
+                  delay: index * 0.05,
+                  duration: 0.3,
+                  layout: { duration: 0.2 }
+                }}
+                layout
+                whileHover={{ x: 4, scale: 1.01 }}
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-3 mb-2">
+                      <h3 className="text-lg font-semibold truncate">
+                        {subscription.name}
+                      </h3>
+                      <Badge
+                        variant={getStatusColor(subscription.status)}
+                        className="text-xs shrink-0"
+                      >
+                        {subscription.status}
                       </Badge>
-                    )}
-                  </div>
-                  <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
-                    <div className="flex items-center gap-1.5">
-                      <Calendar className="w-3.5 h-3.5" />
-                      <span>
-                        {format(
-                          new Date(subscription.nextBillingDate),
-                          "MMM dd, yyyy"
-                        )}
-                      </span>
+                      {subscription.category && (
+                        <Badge variant="outline" className="text-xs shrink-0">
+                          {subscription.category}
+                        </Badge>
+                      )}
                     </div>
-                    {subscription.paymentMethod && (
+                    <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
                       <div className="flex items-center gap-1.5">
-                        <CreditCard className="w-3.5 h-3.5" />
-                        <span>{subscription.paymentMethod}</span>
+                        <Calendar className="w-3.5 h-3.5" />
+                        <span>
+                          {format(
+                            new Date(subscription.nextBillingDate),
+                            "MMM dd, yyyy"
+                          )}
+                        </span>
                       </div>
-                    )}
-                  </div>
-                </div>
-                <div className="flex items-center gap-3 shrink-0">
-                  <div className="text-right">
-                    <div className="text-xl font-semibold">
-                      {formatCurrency(subscription.cost)}
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      /{subscription.billingCycle}
+                      {subscription.paymentMethod && (
+                        <div className="flex items-center gap-1.5">
+                          <CreditCard className="w-3.5 h-3.5" />
+                          <span>{subscription.paymentMethod}</span>
+                        </div>
+                      )}
                     </div>
                   </div>
-                  <div className="flex items-center gap-1">
-                    <EditSubscriptionDialog
-                      subscription={subscription}
-                      onSuccess={fetchSubscriptions}
-                    />
-                    <DeleteSubscriptionDialog
-                      subscription={subscription}
-                      onSuccess={fetchSubscriptions}
-                    />
+                  <div className="flex items-center gap-3 shrink-0">
+                    <div className="text-right">
+                      <div className="text-xl font-semibold">
+                        {formatCurrency(subscription.cost)}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        /{subscription.billingCycle}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <EditSubscriptionDialog
+                        subscription={subscription}
+                        onSuccess={fetchSubscriptions}
+                      />
+                      <DeleteSubscriptionDialog
+                        subscription={subscription}
+                        onSuccess={fetchSubscriptions}
+                      />
+                    </div>
                   </div>
                 </div>
-              </div>
-            </div>
-          ))}
+              </motion.div>
+            ))}
+          </AnimatePresence>
         </div>
       )}
     </>

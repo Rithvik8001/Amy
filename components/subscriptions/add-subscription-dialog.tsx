@@ -20,6 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Plus } from "lucide-react";
 import { toast } from "sonner";
 
@@ -173,13 +174,13 @@ export default function AddSubscriptionDialog({
               <Label htmlFor="nextBillingDate">
                 Next Billing Date <span className="text-destructive">*</span>
               </Label>
-              <Input
+              <DatePicker
                 id="nextBillingDate"
-                type="date"
                 value={formData.nextBillingDate}
-                onChange={(e) =>
-                  setFormData({ ...formData, nextBillingDate: e.target.value })
+                onChange={(date) =>
+                  setFormData({ ...formData, nextBillingDate: date })
                 }
+                placeholder="Select billing date"
                 required
               />
             </div>

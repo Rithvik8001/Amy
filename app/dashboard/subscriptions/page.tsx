@@ -3,10 +3,12 @@ import { redirect } from "next/navigation";
 import { UserButton } from "@clerk/nextjs";
 import { ModeToggle } from "@/components/theme-toggle";
 import Link from "next/link";
-import FinancialOverview from "@/components/subscriptions/financial-overview";
-import { DashboardHeader } from "@/components/dashboard-header";
+import { Button } from "@/components/ui/button";
+import SubscriptionsList from "@/components/subscriptions/subscriptions-list";
+import AddSubscriptionButton from "@/components/subscriptions/add-subscription-button";
+import { SubscriptionsHeader } from "@/components/subscriptions-header";
 
-export default async function DashboardPage() {
+export default async function SubscriptionsPage() {
   const user = await currentUser();
 
   if (!user) {
@@ -37,10 +39,26 @@ export default async function DashboardPage() {
       </nav>
 
       <main className="max-w-2xl mx-auto px-6 py-8">
-        <DashboardHeader firstName={user.firstName} />
+        <SubscriptionsHeader>
+          <div>
+            <h2 className="text-2xl font-semibold mb-1">
+              Your Subscriptions
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              Manage all your subscriptions in one place
+            </p>
+          </div>
+          <div className="flex items-center gap-3">
+            <Link href="/dashboard">
+              <Button variant="outline">Overview</Button>
+            </Link>
+            <AddSubscriptionButton />
+          </div>
+        </SubscriptionsHeader>
 
-        <FinancialOverview />
+        <SubscriptionsList />
       </main>
     </div>
   );
 }
+

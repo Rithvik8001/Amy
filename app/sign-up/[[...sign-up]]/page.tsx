@@ -16,7 +16,9 @@ export default function SignUpPage() {
         <div className="w-full max-w-md">
           <div className="mb-8 text-center">
             <h1 className="text-4xl font-lavishly-yours mb-2">Amy</h1>
-            <p className="text-sm text-muted-foreground">Create your account to get started</p>
+            <p className="text-sm text-muted-foreground">
+              Create your account to get started
+            </p>
           </div>
           <SignUp
             appearance={{
@@ -34,12 +36,16 @@ export default function SignUpPage() {
                   "w-full bg-primary text-primary-foreground hover:bg-primary/90 font-medium py-2",
                 formFieldInput:
                   "w-full border border-input bg-background text-foreground dark:bg-input/30 dark:border-input focus-visible:border-ring focus-visible:ring-ring/50 rounded-md px-3 py-2",
-                footerActionLink: "text-primary hover:text-primary/90 font-medium",
+                footerActionLink:
+                  "text-primary hover:text-primary/90 font-medium",
                 formFieldLabel: "text-sm font-medium text-foreground",
                 identityPreviewText: "text-sm text-foreground",
-                identityPreviewEditButton: "text-primary hover:text-primary/90 text-sm",
-                formResendCodeLink: "text-primary hover:text-primary/90 text-sm",
-                otpCodeFieldInput: "border border-input bg-transparent dark:bg-input/30 dark:border-input rounded-md",
+                identityPreviewEditButton:
+                  "text-primary hover:text-primary/90 text-sm",
+                formResendCodeLink:
+                  "text-primary hover:text-primary/90 text-sm",
+                otpCodeFieldInput:
+                  "border border-input bg-transparent dark:bg-input/30 dark:border-input rounded-md",
                 alertText: "text-sm text-destructive",
                 formFieldLabelRow: "mb-2",
                 formFieldInputGroup: "mb-4",
@@ -54,4 +60,3 @@ export default function SignUpPage() {
     </div>
   );
 }
-
