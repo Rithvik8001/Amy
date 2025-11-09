@@ -1,7 +1,8 @@
 import { ModeToggle } from "../theme-toggle";
-import { SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
+import { SignedIn, SignedOut } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { UserNav } from "@/components/user-nav";
 
 export default function Nav() {
   return (
@@ -20,7 +21,7 @@ export default function Nav() {
             </Button>
           </SignedOut>
           <SignedIn>
-            <UserButton />
+            <UserNav />
           </SignedIn>
           <ModeToggle />
         </div>
