@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import SubscriptionsList from "@/components/subscriptions/subscriptions-list";
 import AddSubscriptionButton from "@/components/subscriptions/add-subscription-button";
 import { SubscriptionsHeader } from "@/components/subscriptions-header";
+import { Logo } from "@/components/logo";
 
 export default async function SubscriptionsPage() {
   const user = await currentUser();
@@ -22,7 +23,8 @@ export default async function SubscriptionsPage() {
       <nav className="sticky top-0 z-50 bg-background/80 backdrop-blur-sm">
         <div className="max-w-2xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
-            <Link href="/dashboard">
+            <Link href="/dashboard" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+              <Logo size={28} />
               <h1 className="text-3xl font-lavishly-yours cursor-pointer">
                 Amy
               </h1>

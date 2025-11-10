@@ -5,6 +5,7 @@ import { ModeToggle } from "@/components/theme-toggle";
 import Link from "next/link";
 import FinancialOverview from "@/components/subscriptions/financial-overview";
 import { DashboardHeader } from "@/components/dashboard-header";
+import { Logo } from "@/components/logo";
 
 export default async function DashboardPage() {
   const user = await currentUser();
@@ -20,7 +21,8 @@ export default async function DashboardPage() {
       <nav className="sticky top-0 z-50 bg-background/80 backdrop-blur-sm">
         <div className="max-w-2xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
-            <Link href="/dashboard">
+            <Link href="/dashboard" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
+              <Logo size={28} />
               <h1 className="text-3xl font-lavishly-yours cursor-pointer">
                 Amy
               </h1>
