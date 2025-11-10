@@ -2,13 +2,15 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { Badge } from "@/components/ui/badge";
-import { format } from "date-fns";
-import { Calendar, CreditCard } from "lucide-react";
+import { format, differenceInDays } from "date-fns";
+import { Calendar, CreditCard, AlertCircle } from "lucide-react";
 import EditSubscriptionDialog from "./edit-subscription-dialog";
 import DeleteSubscriptionDialog from "./delete-subscription-dialog";
+import MarkAsPaidButton from "./mark-as-paid-button";
 import SubscriptionFilters from "./subscription-filters";
 import { motion, AnimatePresence } from "motion/react";
 import { SubscriptionIcon } from "./subscription-icon";
+import { parseLocalDate } from "@/lib/date-utils";
 
 type Subscription = {
   id: number;
@@ -182,6 +184,24 @@ export default function SubscriptionsList() {
     }
   };
 
+  // Check if subscription is overdue
+  const isOverdue = (subscription: Subscription): boolean => {
+    if (subscription.status !== "active") return false;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const billingDate = parseLocalDate(subscription.nextBillingDate);
+    return billingDate < today;
+  };
+
+  // Calculate days overdue
+  const getDaysOverdue = (subscription: Subscription): number => {
+    if (!isOverdue(subscription)) return 0;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const billingDate = parseLocalDate(subscription.nextBillingDate);
+    return differenceInDays(today, billingDate);
+  };
+
   return (
     <>
       <SubscriptionFilters
@@ -202,10 +222,16 @@ export default function SubscriptionsList() {
       ) : (
         <div className="space-y-6">
           <AnimatePresence mode="popLayout">
-            {filteredAndSortedSubscriptions.map((subscription, index) => (
+            {filteredAndSortedSubscriptions.map((subscription, index) => {
+              const overdue = isOverdue(subscription);
+              const daysOverdue = getDaysOverdue(subscription);
+              
+              return (
               <motion.div
                 key={subscription.id}
-                className="group py-4 hover:bg-muted/20 transition-colors rounded-lg px-2 -mx-2 cursor-pointer"
+                className={`group py-4 hover:bg-muted/20 transition-colors rounded-lg px-2 -mx-2 cursor-pointer ${
+                  overdue ? "border-l-2 border-destructive" : ""
+                }`}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, x: -20, scale: 0.95 }}
@@ -235,6 +261,12 @@ export default function SubscriptionsList() {
                       >
                         {subscription.status}
                       </Badge>
+                      {overdue && (
+                        <Badge variant="destructive" className="text-xs shrink-0 flex items-center gap-1">
+                          <AlertCircle className="w-3 h-3" />
+                          {daysOverdue === 1 ? "1 day overdue" : `${daysOverdue} days overdue`}
+                        </Badge>
+                      )}
                       {subscription.category && (
                         <Badge variant="outline" className="text-xs shrink-0">
                           {subscription.category}
@@ -273,6 +305,10 @@ export default function SubscriptionsList() {
                         subscription={subscription}
                         onSuccess={fetchSubscriptions}
                       />
+                      <MarkAsPaidButton
+                        subscription={subscription}
+                        onSuccess={fetchSubscriptions}
+                      />
                       <DeleteSubscriptionDialog
                         subscription={subscription}
                         onSuccess={fetchSubscriptions}
@@ -281,7 +317,8 @@ export default function SubscriptionsList() {
                   </div>
                 </div>
               </motion.div>
-            ))}
+              );
+            })}
           </AnimatePresence>
         </div>
       )}

@@ -10,6 +10,7 @@ import {
   sendRenewalReminder1DayEmail,
 } from "@/lib/email";
 import { parseLocalDate } from "@/lib/date-utils";
+import { autoRenewPastDueSubscriptions } from "@/lib/subscription-utils";
 
 export async function GET() {
   try {
@@ -19,7 +20,7 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const userSubscriptions = await db
+    let userSubscriptions = await db
       .select()
       .from(subscriptions)
       .where(eq(subscriptions.userId, userId))
@@ -38,7 +39,7 @@ export async function GET() {
       return billingDate < today;
     });
 
-    // Send past due emails for each subscription
+    // Send past due emails for each subscription (before auto-renewal)
     for (const subscription of pastDueSubscriptions) {
       sendPastDueEmail(userId, {
         id: subscription.id,
@@ -55,6 +56,12 @@ export async function GET() {
         );
       });
     }
+
+    // Automatically renew past due subscriptions
+    userSubscriptions = await autoRenewPastDueSubscriptions(
+      userSubscriptions,
+      userId
+    );
 
     return NextResponse.json(userSubscriptions);
   } catch (error) {

@@ -24,6 +24,11 @@ import { DatePicker } from "@/components/ui/date-picker";
 import { Pencil } from "lucide-react";
 import { toast } from "sonner";
 import { IconPicker } from "./icon-picker";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 type Subscription = {
   id: number;
@@ -156,11 +161,18 @@ export default function EditSubscriptionDialog({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-8 w-8">
-          <Pencil className="w-4 h-4" />
-        </Button>
-      </DialogTrigger>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <DialogTrigger asChild>
+            <Button variant="ghost" size="icon" className="h-8 w-8">
+              <Pencil className="w-4 h-4" />
+            </Button>
+          </DialogTrigger>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>Edit subscription</p>
+        </TooltipContent>
+      </Tooltip>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>Edit Subscription</DialogTitle>

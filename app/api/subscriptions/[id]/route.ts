@@ -10,6 +10,7 @@ import {
   sendRenewalReminder1DayEmail,
 } from "@/lib/email";
 import { parseLocalDate } from "@/lib/date-utils";
+import { autoRenewPastDueSubscriptions } from "@/lib/subscription-utils";
 
 // GET /api/subscriptions/[id] - Get single subscription
 export async function GET(
@@ -51,7 +52,25 @@ export async function GET(
       );
     }
 
-    return NextResponse.json(subscription[0]);
+    // Check if subscription is past due and auto-renew if needed
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const billingDate = parseLocalDate(subscription[0].nextBillingDate);
+    
+    let finalSubscription = subscription[0];
+    
+    // Auto-renew if past due and active
+    if (subscription[0].status === "active" && billingDate < today) {
+      const renewedSubscriptions = await autoRenewPastDueSubscriptions(
+        [subscription[0]],
+        userId
+      );
+      if (renewedSubscriptions.length > 0) {
+        finalSubscription = renewedSubscriptions[0];
+      }
+    }
+
+    return NextResponse.json(finalSubscription);
   } catch (error) {
     console.error("Error fetching subscription:", error);
     return NextResponse.json(

@@ -5,6 +5,7 @@ import db from "@/db/config";
 import { subscriptions } from "@/db/models/subscriptions";
 import { sendPastDueEmail } from "@/lib/email";
 import { parseLocalDate } from "@/lib/date-utils";
+import { autoRenewPastDueSubscriptions } from "@/lib/subscription-utils";
 
 export async function GET() {
   try {
@@ -15,10 +16,47 @@ export async function GET() {
     }
 
     // Get all active subscriptions for the user
-    const userSubscriptions = await db
+    let userSubscriptions = await db
       .select()
       .from(subscriptions)
       .where(eq(subscriptions.userId, userId));
+
+    // Check for past due subscriptions and send emails (non-blocking)
+    // Past due = billing date has PASSED (not today, not tomorrow)
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const pastDueSubscriptions = userSubscriptions.filter((sub) => {
+      if (sub.status !== "active") return false;
+      // Parse date as local date to avoid timezone issues
+      const billingDate = parseLocalDate(sub.nextBillingDate);
+      // Only past due if billing date is BEFORE today (has passed)
+      return billingDate < today;
+    });
+
+    // Send past due emails for each subscription (before auto-renewal)
+    for (const subscription of pastDueSubscriptions) {
+      sendPastDueEmail(userId, {
+        id: subscription.id,
+        userId: subscription.userId,
+        name: subscription.name,
+        cost: subscription.cost,
+        billingCycle: subscription.billingCycle,
+        nextBillingDate: subscription.nextBillingDate,
+        status: subscription.status,
+      }).catch((error) => {
+        console.error(
+          `Error sending past due email for subscription ${subscription.id} (non-blocking):`,
+          error
+        );
+      });
+    }
+
+    // Automatically renew past due subscriptions
+    userSubscriptions = await autoRenewPastDueSubscriptions(
+      userSubscriptions,
+      userId
+    );
 
     // Calculate total monthly spending (only active subscriptions)
     const activeSubscriptions = userSubscriptions.filter(
@@ -86,33 +124,6 @@ export async function GET() {
 
     // Sort by spending (descending)
     categoryStats.sort((a, b) => b.monthlySpending - a.monthlySpending);
-
-    // Check for past due subscriptions and send emails (non-blocking)
-    // Past due = billing date has PASSED (not today, not tomorrow)
-    const pastDueSubscriptions = activeSubscriptions.filter((sub) => {
-      // Parse date as local date to avoid timezone issues
-      const billingDate = parseLocalDate(sub.nextBillingDate);
-      // Only past due if billing date is BEFORE today (has passed)
-      return billingDate < today;
-    });
-
-    // Send past due emails for each subscription
-    for (const subscription of pastDueSubscriptions) {
-      sendPastDueEmail(userId, {
-        id: subscription.id,
-        userId: subscription.userId,
-        name: subscription.name,
-        cost: subscription.cost,
-        billingCycle: subscription.billingCycle,
-        nextBillingDate: subscription.nextBillingDate,
-        status: subscription.status,
-      }).catch((error) => {
-        console.error(
-          `Error sending past due email for subscription ${subscription.id} (non-blocking):`,
-          error
-        );
-      });
-    }
 
     return NextResponse.json({
       totalMonthly: parseFloat(totalMonthly.toFixed(2)),
