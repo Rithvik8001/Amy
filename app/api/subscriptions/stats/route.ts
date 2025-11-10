@@ -3,6 +3,8 @@ import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import db from "@/db/config";
 import { subscriptions } from "@/db/models/subscriptions";
+import { sendPastDueEmail } from "@/lib/email";
+import { parseLocalDate } from "@/lib/date-utils";
 
 export async function GET() {
   try {
@@ -49,14 +51,14 @@ export async function GET() {
     next30Days.setDate(today.getDate() + 30);
 
     const upcoming7Days = activeSubscriptions.filter((sub) => {
-      const billingDate = new Date(sub.nextBillingDate);
-      billingDate.setHours(0, 0, 0, 0);
+      // Parse date as local date to avoid timezone issues
+      const billingDate = parseLocalDate(sub.nextBillingDate);
       return billingDate >= today && billingDate <= next7Days;
     });
 
     const upcoming30Days = activeSubscriptions.filter((sub) => {
-      const billingDate = new Date(sub.nextBillingDate);
-      billingDate.setHours(0, 0, 0, 0);
+      // Parse date as local date to avoid timezone issues
+      const billingDate = parseLocalDate(sub.nextBillingDate);
       return billingDate >= today && billingDate <= next30Days;
     });
 
@@ -84,6 +86,33 @@ export async function GET() {
 
     // Sort by spending (descending)
     categoryStats.sort((a, b) => b.monthlySpending - a.monthlySpending);
+
+    // Check for past due subscriptions and send emails (non-blocking)
+    // Past due = billing date has PASSED (not today, not tomorrow)
+    const pastDueSubscriptions = activeSubscriptions.filter((sub) => {
+      // Parse date as local date to avoid timezone issues
+      const billingDate = parseLocalDate(sub.nextBillingDate);
+      // Only past due if billing date is BEFORE today (has passed)
+      return billingDate < today;
+    });
+
+    // Send past due emails for each subscription
+    for (const subscription of pastDueSubscriptions) {
+      sendPastDueEmail(userId, {
+        id: subscription.id,
+        userId: subscription.userId,
+        name: subscription.name,
+        cost: subscription.cost,
+        billingCycle: subscription.billingCycle,
+        nextBillingDate: subscription.nextBillingDate,
+        status: subscription.status,
+      }).catch((error) => {
+        console.error(
+          `Error sending past due email for subscription ${subscription.id} (non-blocking):`,
+          error
+        );
+      });
+    }
 
     return NextResponse.json({
       totalMonthly: parseFloat(totalMonthly.toFixed(2)),

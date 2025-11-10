@@ -1,0 +1,1 @@
+ALTER TYPE "public"."email_notification_type" ADD VALUE 'renewal_reminder_1day' BEFORE 'price_change';

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState } from "react";
 import { format } from "date-fns";
 import { Calendar, DollarSign, TrendingUp, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -63,33 +63,33 @@ export default function FinancialOverview() {
 
   // Get computed RGB colors from CSS variables (for SVG compatibility)
   useEffect(() => {
-    if (typeof window === 'undefined' || !mounted) return;
-    
-    const colorKeys = ['chart-1', 'chart-2', 'chart-3', 'chart-4', 'chart-5'];
+    if (typeof window === "undefined" || !mounted) return;
+
+    const colorKeys = ["chart-1", "chart-2", "chart-3", "chart-4", "chart-5"];
     const colors: string[] = [];
-    
+
     colorKeys.forEach((colorKey) => {
       // Create a temporary element to get computed color
-      const tempEl = document.createElement('div');
+      const tempEl = document.createElement("div");
       tempEl.style.color = `hsl(var(--${colorKey}))`;
-      tempEl.style.position = 'absolute';
-      tempEl.style.visibility = 'hidden';
-      tempEl.style.width = '1px';
-      tempEl.style.height = '1px';
+      tempEl.style.position = "absolute";
+      tempEl.style.visibility = "hidden";
+      tempEl.style.width = "1px";
+      tempEl.style.height = "1px";
       document.body.appendChild(tempEl);
-      
+
       const computedColor = getComputedStyle(tempEl).color;
       document.body.removeChild(tempEl);
-      
-      colors.push(computedColor || '#8884d8');
+
+      colors.push(computedColor || "#8884d8");
     });
-    
+
     setCategoryColors(colors);
   }, [mounted, resolvedTheme]);
 
   // Get color for a category by index
   const getCategoryColor = (index: number) => {
-    if (categoryColors.length === 0) return '#8884d8';
+    if (categoryColors.length === 0) return "#8884d8";
     return categoryColors[index % categoryColors.length];
   };
 
@@ -165,39 +165,42 @@ export default function FinancialOverview() {
   const prepareAreaChartData = () => {
     const months = [];
     const currentDate = new Date();
-    
+
     for (let i = 0; i < 3; i++) {
       const monthDate = new Date(currentDate);
       monthDate.setMonth(currentDate.getMonth() + i);
       const monthName = format(monthDate, "MMM");
-      
+
       const monthData: Record<string, string | number> = {
         month: monthName,
       };
-      
+
       // Add each category's spending for this month
       stats.categoryBreakdown.forEach((item, index) => {
         monthData[item.category] = item.monthlySpending;
       });
-      
+
       months.push(monthData);
     }
-    
+
     return months;
   };
 
   const areaChartData = stats ? prepareAreaChartData() : [];
-  
+
   // Build chart config for each category with theme-aware colors
-  const chartConfig: Record<string, { label: string; theme?: Record<string, string> }> = {
+  const chartConfig: Record<
+    string,
+    { label: string; theme?: Record<string, string> }
+  > = {
     month: { label: "Month" },
   };
-  
+
   stats?.categoryBreakdown.forEach((item, index) => {
     // Use theme-aware colors that work in both light and dark mode
-    const colorKeys = ['chart-1', 'chart-2', 'chart-3', 'chart-4', 'chart-5'];
+    const colorKeys = ["chart-1", "chart-2", "chart-3", "chart-4", "chart-5"];
     const colorKey = colorKeys[index % colorKeys.length];
-    
+
     chartConfig[item.category] = {
       label: item.category,
       theme: {
@@ -206,10 +209,9 @@ export default function FinancialOverview() {
       },
     };
   });
-  
 
   return (
-    <motion.div 
+    <motion.div
       className="space-y-8"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
@@ -218,9 +220,21 @@ export default function FinancialOverview() {
       {/* Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {[
-          { icon: DollarSign, label: "Monthly", value: formatCurrency(stats.totalMonthly) },
-          { icon: TrendingUp, label: "Yearly", value: formatCurrency(stats.totalYearly) },
-          { icon: Package, label: "Active", value: stats.totalActiveSubscriptions },
+          {
+            icon: DollarSign,
+            label: "Monthly",
+            value: formatCurrency(stats.totalMonthly),
+          },
+          {
+            icon: TrendingUp,
+            label: "Yearly",
+            value: formatCurrency(stats.totalYearly),
+          },
+          {
+            icon: Package,
+            label: "Active",
+            value: stats.totalActiveSubscriptions,
+          },
         ].map((card, index) => (
           <motion.div
             key={card.label}
@@ -232,7 +246,9 @@ export default function FinancialOverview() {
           >
             <div className="flex items-center gap-3 mb-2">
               <card.icon className="w-5 h-5 text-muted-foreground" />
-              <span className="text-sm text-muted-foreground">{card.label}</span>
+              <span className="text-sm text-muted-foreground">
+                {card.label}
+              </span>
             </div>
             <div className="text-2xl font-semibold">{card.value}</div>
           </motion.div>
@@ -249,12 +265,8 @@ export default function FinancialOverview() {
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold">Upcoming Renewals</h3>
             <div className="flex items-center gap-4 text-sm text-muted-foreground">
-              <span>
-                {stats.upcomingRenewals.next7Days} in next 7 days
-              </span>
-              <span>
-                {stats.upcomingRenewals.next30Days} in next 30 days
-              </span>
+              <span>{stats.upcomingRenewals.next7Days} in next 7 days</span>
+              <span>{stats.upcomingRenewals.next30Days} in next 30 days</span>
             </div>
           </div>
           <div className="space-y-3">
@@ -282,10 +294,7 @@ export default function FinancialOverview() {
                       {formatCurrency(parseFloat(item.cost))}
                     </div>
                     <div className="text-xs text-muted-foreground">
-                      {format(
-                        new Date(item.nextBillingDate),
-                        "MMM dd, yyyy"
-                      )}
+                      {format(new Date(item.nextBillingDate), "MMM dd, yyyy")}
                     </div>
                   </div>
                 </div>
@@ -319,70 +328,73 @@ export default function FinancialOverview() {
                   config={chartConfig}
                   className="h-[300px] w-full"
                 >
-                <AreaChart
-                  data={areaChartData}
-                  margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
-                >
-                  <defs>
-                    {stats.categoryBreakdown.map((item, index) => {
-                      const color = getCategoryColor(index);
-                      return (
-                        <linearGradient
-                          key={item.category}
-                          id={`color${index}`}
-                          x1="0"
-                          y1="0"
-                          x2="0"
-                          y2="1"
-                        >
-                          <stop
-                            offset="5%"
-                            stopColor={color}
-                            stopOpacity={0.8}
-                          />
-                          <stop
-                            offset="95%"
-                            stopColor={color}
-                            stopOpacity={0.1}
-                          />
-                        </linearGradient>
-                      );
-                    })}
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                  <XAxis
-                    dataKey="month"
-                    tickLine={false}
-                    axisLine={false}
-                    tickMargin={8}
-                    tick={{ fill: 'hsl(var(--muted-foreground))' }}
-                  />
-                  <YAxis
-                    tickLine={false}
-                    axisLine={false}
-                    tickMargin={8}
-                    tickFormatter={(value) => `$${value}`}
-                    tick={{ fill: 'hsl(var(--muted-foreground))' }}
-                  />
-                  <ChartTooltip
-                    content={
-                      <ChartTooltipContent
-                        formatter={(value) => formatCurrency(Number(value))}
-                      />
-                    }
-                  />
-                  {stats.categoryBreakdown.map((item, index) => (
-                    <Area
-                      key={item.category}
-                      type="monotone"
-                      dataKey={item.category}
-                      stackId="1"
-                      stroke={getCategoryColor(index)}
-                      fill={`url(#color${index})`}
+                  <AreaChart
+                    data={areaChartData}
+                    margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+                  >
+                    <defs>
+                      {stats.categoryBreakdown.map((item, index) => {
+                        const color = getCategoryColor(index);
+                        return (
+                          <linearGradient
+                            key={item.category}
+                            id={`color${index}`}
+                            x1="0"
+                            y1="0"
+                            x2="0"
+                            y2="1"
+                          >
+                            <stop
+                              offset="5%"
+                              stopColor={color}
+                              stopOpacity={0.8}
+                            />
+                            <stop
+                              offset="95%"
+                              stopColor={color}
+                              stopOpacity={0.1}
+                            />
+                          </linearGradient>
+                        );
+                      })}
+                    </defs>
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      className="stroke-muted"
                     />
-                  ))}
-                </AreaChart>
-              </ChartContainer>
+                    <XAxis
+                      dataKey="month"
+                      tickLine={false}
+                      axisLine={false}
+                      tickMargin={8}
+                      tick={{ fill: "hsl(var(--muted-foreground))" }}
+                    />
+                    <YAxis
+                      tickLine={false}
+                      axisLine={false}
+                      tickMargin={8}
+                      tickFormatter={(value) => `$${value}`}
+                      tick={{ fill: "hsl(var(--muted-foreground))" }}
+                    />
+                    <ChartTooltip
+                      content={
+                        <ChartTooltipContent
+                          formatter={(value) => formatCurrency(Number(value))}
+                        />
+                      }
+                    />
+                    {stats.categoryBreakdown.map((item, index) => (
+                      <Area
+                        key={item.category}
+                        type="monotone"
+                        dataKey={item.category}
+                        stackId="1"
+                        stroke={getCategoryColor(index)}
+                        fill={`url(#color${index})`}
+                      />
+                    ))}
+                  </AreaChart>
+                </ChartContainer>
               </motion.div>
               <motion.div
                 initial={{ opacity: 0 }}
@@ -393,7 +405,9 @@ export default function FinancialOverview() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Category</TableHead>
-                      <TableHead className="text-right">Monthly Spending</TableHead>
+                      <TableHead className="text-right">
+                        Monthly Spending
+                      </TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -403,7 +417,9 @@ export default function FinancialOverview() {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         transition={{ delay: 0.8 + index * 0.05 }}
-                        whileHover={{ backgroundColor: 'hsl(var(--muted) / 0.3)' }}
+                        whileHover={{
+                          backgroundColor: "hsl(var(--muted) / 0.3)",
+                        }}
                       >
                         <TableCell>
                           <div className="flex items-center gap-3">
@@ -455,4 +471,3 @@ export default function FinancialOverview() {
     </motion.div>
   );
 }
-

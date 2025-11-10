@@ -4,6 +4,12 @@ import { eq, and, sql } from "drizzle-orm";
 import db from "@/db/config";
 import { subscriptions } from "@/db/models/subscriptions";
 import { updateSubscriptionSchema } from "@/lib/validations/subscription";
+import {
+  sendRenewalReminderEmail,
+  sendPriceChangeEmail,
+  sendRenewalReminder1DayEmail,
+} from "@/lib/email";
+import { parseLocalDate } from "@/lib/date-utils";
 
 // GET /api/subscriptions/[id] - Get single subscription
 export async function GET(
@@ -17,7 +23,6 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Handle both sync and async params (Next.js 15+)
     const resolvedParams = await Promise.resolve(params);
     const subscriptionId = parseInt(resolvedParams.id);
 
@@ -68,7 +73,6 @@ export async function PUT(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Handle both sync and async params (Next.js 15+)
     const resolvedParams = await Promise.resolve(params);
     const subscriptionId = parseInt(resolvedParams.id);
 
@@ -79,7 +83,6 @@ export async function PUT(
       );
     }
 
-    // Check if subscription exists and belongs to user
     const existingSubscription = await db
       .select()
       .from(subscriptions)
@@ -98,14 +101,17 @@ export async function PUT(
       );
     }
 
+    const oldSubscription = existingSubscription[0];
+    const oldCost = oldSubscription.cost;
+    const oldNextBillingDate = oldSubscription.nextBillingDate;
+    const oldStatus = oldSubscription.status;
+
     const body = await request.json();
 
-    // If no fields to update, return existing subscription
     if (Object.keys(body).length === 0) {
       return NextResponse.json(existingSubscription[0]);
     }
 
-    // Validate request body with Zod
     const validationResult = updateSubscriptionSchema.safeParse(body);
 
     if (!validationResult.success) {
@@ -120,7 +126,6 @@ export async function PUT(
 
     const updateData = validationResult.data;
 
-    // Build update object (only include provided fields)
     const updateValues: Record<string, unknown> = {};
 
     if (updateData.name !== undefined) updateValues.name = updateData.name;
@@ -164,7 +169,98 @@ export async function PUT(
       );
     }
 
-    return NextResponse.json(updatedSubscription[0]);
+    const updatedSub = updatedSubscription[0];
+
+    // Check for price change and send email if needed
+    if (
+      updateData.cost !== undefined &&
+      oldStatus === "active" &&
+      updatedSub.status === "active"
+    ) {
+      const newCost = updatedSub.cost;
+      if (oldCost !== newCost) {
+        // Price changed - send email (non-blocking)
+        sendPriceChangeEmail(
+          userId,
+          {
+            id: updatedSub.id,
+            userId: updatedSub.userId,
+            name: updatedSub.name,
+            cost: updatedSub.cost,
+            billingCycle: updatedSub.billingCycle,
+            nextBillingDate: updatedSub.nextBillingDate,
+            status: updatedSub.status,
+          },
+          oldCost,
+          newCost
+        ).catch((error) => {
+          console.error(
+            "Error sending price change email (non-blocking):",
+            error
+          );
+        });
+      }
+    }
+
+    // Check if renewal reminder should be sent (3 days or 1 day before due date)
+    const finalNextBillingDate =
+      updateData.nextBillingDate !== undefined
+        ? updateData.nextBillingDate
+        : oldNextBillingDate;
+    const finalStatus =
+      updateData.status !== undefined ? updatedSub.status : oldStatus;
+
+    if (finalStatus === "active") {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const threeDaysFromNow = new Date(today);
+      threeDaysFromNow.setDate(today.getDate() + 3);
+      const oneDayFromNow = new Date(today);
+      oneDayFromNow.setDate(today.getDate() + 1);
+
+      // Parse date as local date to avoid timezone issues
+      const billingDate = parseLocalDate(finalNextBillingDate);
+
+      // Check if billing date is exactly 3 days away
+      if (billingDate.getTime() === threeDaysFromNow.getTime()) {
+        // Send renewal reminder email (non-blocking)
+        sendRenewalReminderEmail(userId, {
+          id: updatedSub.id,
+          userId: updatedSub.userId,
+          name: updatedSub.name,
+          cost: updatedSub.cost,
+          billingCycle: updatedSub.billingCycle,
+          nextBillingDate: finalNextBillingDate,
+          status: updatedSub.status,
+        }).catch((error) => {
+          console.error(
+            "Error sending renewal reminder email (non-blocking):",
+            error
+          );
+        });
+      }
+
+      // Check if billing date is exactly 1 day away
+      if (billingDate.getTime() === oneDayFromNow.getTime()) {
+        // Send 1-day renewal reminder email (non-blocking)
+        sendRenewalReminder1DayEmail(userId, {
+          id: updatedSub.id,
+          userId: updatedSub.userId,
+          name: updatedSub.name,
+          cost: updatedSub.cost,
+          billingCycle: updatedSub.billingCycle,
+          nextBillingDate: finalNextBillingDate,
+          status: updatedSub.status,
+        }).catch((error) => {
+          console.error(
+            "Error sending 1-day renewal reminder email (non-blocking):",
+            error
+          );
+        });
+      }
+    }
+
+    return NextResponse.json(updatedSub);
   } catch (error) {
     console.error("Error updating subscription:", error);
 
@@ -203,7 +299,6 @@ export async function DELETE(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Handle both sync and async params (Next.js 15+)
     const resolvedParams = await Promise.resolve(params);
     const subscriptionId = parseInt(resolvedParams.id);
 
