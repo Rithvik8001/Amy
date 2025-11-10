@@ -6,7 +6,6 @@ import { format, differenceInDays } from "date-fns";
 import { Calendar, CreditCard, AlertCircle } from "lucide-react";
 import EditSubscriptionDialog from "./edit-subscription-dialog";
 import DeleteSubscriptionDialog from "./delete-subscription-dialog";
-import MarkAsPaidButton from "./mark-as-paid-button";
 import SubscriptionFilters from "./subscription-filters";
 import { motion, AnimatePresence } from "motion/react";
 import { SubscriptionIcon } from "./subscription-icon";
@@ -302,10 +301,6 @@ export default function SubscriptionsList() {
                     </div>
                     <div className="flex items-center gap-1">
                       <EditSubscriptionDialog
-                        subscription={subscription}
-                        onSuccess={fetchSubscriptions}
-                      />
-                      <MarkAsPaidButton
                         subscription={subscription}
                         onSuccess={fetchSubscriptions}
                       />
