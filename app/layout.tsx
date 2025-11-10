@@ -26,6 +26,21 @@ export const metadata: Metadata = {
   title: "Amy - All your subscriptions in one place",
   description:
     "All your subscriptions in one place—because you're tired of surprises.",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Amy",
+  },
+  icons: {
+    icon: [
+      { url: "/assets/logo-32x32.png", sizes: "32x32", type: "image/png" },
+      { url: "/assets/logo-12x12.png", sizes: "12x12", type: "image/png" },
+    ],
+    apple: [
+      { url: "/assets/logo-180x180.png", sizes: "180x180", type: "image/png" },
+    ],
+  },
 };
 
 export default function RootLayout({
