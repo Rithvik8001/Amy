@@ -22,6 +22,7 @@ import {
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid } from "recharts";
 import { useTheme } from "next-themes";
 import { motion } from "motion/react";
+import { SubscriptionIcon } from "./subscription-icon";
 
 type SubscriptionStats = {
   totalMonthly: number;
@@ -37,6 +38,7 @@ type SubscriptionStats = {
       billingCycle: "monthly" | "yearly";
       nextBillingDate: string;
       category: string | null;
+      icon: string | null;
     }>;
   };
   categoryBreakdown: Array<{
@@ -282,6 +284,12 @@ export default function FinancialOverview() {
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                   <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
                     <Calendar className="w-4 h-4 text-muted-foreground shrink-0" />
+                    <SubscriptionIcon
+                      iconId={item.icon}
+                      name={item.name}
+                      size={18}
+                      className="shrink-0"
+                    />
                     <span className="font-medium text-sm sm:text-base">{item.name}</span>
                     {item.category && (
                       <Badge variant="outline" className="text-xs">

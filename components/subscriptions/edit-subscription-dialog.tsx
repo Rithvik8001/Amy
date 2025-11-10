@@ -23,6 +23,7 @@ import {
 import { DatePicker } from "@/components/ui/date-picker";
 import { Pencil } from "lucide-react";
 import { toast } from "sonner";
+import { IconPicker } from "./icon-picker";
 
 type Subscription = {
   id: number;
@@ -34,6 +35,7 @@ type Subscription = {
   category: string | null;
   status: "active" | "cancelled" | "paused";
   paymentMethod: string | null;
+  icon: string | null;
 };
 
 type SubscriptionFormData = {
@@ -44,6 +46,7 @@ type SubscriptionFormData = {
   category: string;
   status: "active" | "cancelled" | "paused";
   paymentMethod: string;
+  icon?: string;
 };
 
 interface EditSubscriptionDialogProps {
@@ -65,6 +68,7 @@ export default function EditSubscriptionDialog({
     category: subscription.category || "",
     status: subscription.status,
     paymentMethod: subscription.paymentMethod || "",
+    icon: subscription.icon || undefined,
   });
 
   useEffect(() => {
@@ -84,6 +88,7 @@ export default function EditSubscriptionDialog({
         category: subscription.category || "",
         status: subscription.status,
         paymentMethod: subscription.paymentMethod || "",
+        icon: subscription.icon || undefined,
       });
     }
   }, [subscription, open]);
@@ -114,6 +119,8 @@ export default function EditSubscriptionDialog({
         updatePayload.status = formData.status;
       if (formData.paymentMethod !== (subscription.paymentMethod || ""))
         updatePayload.paymentMethod = formData.paymentMethod || undefined;
+      if (formData.icon !== (subscription.icon || undefined))
+        updatePayload.icon = formData.icon || undefined;
 
       // If no changes, show message and return
       if (Object.keys(updatePayload).length === 0) {
@@ -177,6 +184,14 @@ export default function EditSubscriptionDialog({
                 required
               />
             </div>
+
+            <IconPicker
+              value={formData.icon}
+              onValueChange={(value) =>
+                setFormData({ ...formData, icon: value })
+              }
+              id="edit-icon"
+            />
 
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">

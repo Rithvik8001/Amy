@@ -8,6 +8,7 @@ import EditSubscriptionDialog from "./edit-subscription-dialog";
 import DeleteSubscriptionDialog from "./delete-subscription-dialog";
 import SubscriptionFilters from "./subscription-filters";
 import { motion, AnimatePresence } from "motion/react";
+import { SubscriptionIcon } from "./subscription-icon";
 
 type Subscription = {
   id: number;
@@ -19,6 +20,7 @@ type Subscription = {
   category: string | null;
   status: "active" | "cancelled" | "paused";
   paymentMethod: string | null;
+  icon: string | null;
   createdAt: Date | string;
   updatedAt: Date | string;
 };
@@ -218,6 +220,12 @@ export default function SubscriptionsList() {
                 <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4">
                   <div className="flex-1 min-w-0">
                     <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-2">
+                      <SubscriptionIcon
+                        iconId={subscription.icon}
+                        name={subscription.name}
+                        size={20}
+                        className="shrink-0"
+                      />
                       <h3 className="text-base sm:text-lg font-semibold truncate">
                         {subscription.name}
                       </h3>

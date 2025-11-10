@@ -23,6 +23,7 @@ import {
 import { DatePicker } from "@/components/ui/date-picker";
 import { Plus } from "lucide-react";
 import { toast } from "sonner";
+import { IconPicker } from "./icon-picker";
 
 type SubscriptionFormData = {
   name: string;
@@ -32,6 +33,7 @@ type SubscriptionFormData = {
   category: string;
   status: "active" | "cancelled" | "paused";
   paymentMethod: string;
+  icon?: string;
 };
 
 interface AddSubscriptionDialogProps {
@@ -51,6 +53,7 @@ export default function AddSubscriptionDialog({
     category: "",
     status: "active",
     paymentMethod: "",
+    icon: undefined,
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -71,6 +74,7 @@ export default function AddSubscriptionDialog({
           category: formData.category || undefined,
           status: formData.status,
           paymentMethod: formData.paymentMethod || undefined,
+          icon: formData.icon || undefined,
         }),
       });
 
@@ -89,6 +93,7 @@ export default function AddSubscriptionDialog({
         category: "",
         status: "active",
         paymentMethod: "",
+        icon: undefined,
       });
       onSuccess();
     } catch (error) {
@@ -131,6 +136,14 @@ export default function AddSubscriptionDialog({
                 required
               />
             </div>
+
+            <IconPicker
+              value={formData.icon}
+              onValueChange={(value) =>
+                setFormData({ ...formData, icon: value })
+              }
+              id="icon"
+            />
 
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">

@@ -1,13 +1,12 @@
 import { currentUser } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
-import { UserButton } from "@clerk/nextjs";
-import { ModeToggle } from "@/components/theme-toggle";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import SubscriptionsList from "@/components/subscriptions/subscriptions-list";
 import AddSubscriptionButton from "@/components/subscriptions/add-subscription-button";
 import { SubscriptionsHeader } from "@/components/subscriptions-header";
 import { Logo } from "@/components/logo";
+import { NavActions } from "@/components/nav-actions";
 
 export default async function SubscriptionsPage() {
   const user = await currentUser();
@@ -30,11 +29,7 @@ export default async function SubscriptionsPage() {
               </h1>
             </Link>
             <div className="flex items-center gap-2 sm:gap-4">
-              <span className="text-xs sm:text-sm text-muted-foreground hidden sm:block">
-                {userName}
-              </span>
-              <ModeToggle />
-              <UserButton />
+              <NavActions userName={userName} />
             </div>
           </div>
         </div>

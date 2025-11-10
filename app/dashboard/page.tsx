@@ -1,11 +1,10 @@
 import { currentUser } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
-import { UserButton } from "@clerk/nextjs";
-import { ModeToggle } from "@/components/theme-toggle";
 import Link from "next/link";
 import FinancialOverview from "@/components/subscriptions/financial-overview";
 import { DashboardHeader } from "@/components/dashboard-header";
 import { Logo } from "@/components/logo";
+import { NavActions } from "@/components/nav-actions";
 
 export default async function DashboardPage() {
   const user = await currentUser();
@@ -28,11 +27,7 @@ export default async function DashboardPage() {
               </h1>
             </Link>
             <div className="flex items-center gap-2 sm:gap-4">
-              <span className="text-xs sm:text-sm text-muted-foreground hidden sm:block">
-                {userName}
-              </span>
-              <ModeToggle />
-              <UserButton />
+              <NavActions userName={userName} />
             </div>
           </div>
         </div>

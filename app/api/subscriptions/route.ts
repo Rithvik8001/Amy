@@ -97,6 +97,7 @@ export async function POST(request: Request) {
       category,
       status,
       paymentMethod,
+      icon,
     } = validationResult.data;
 
     const newSubscription = await db
@@ -110,6 +111,7 @@ export async function POST(request: Request) {
         category: category || null,
         status,
         paymentMethod: paymentMethod || null,
+        icon: icon || null,
       })
       .returning();
 

@@ -21,6 +21,7 @@ export const subscriptions = pgTable("subscriptions", {
   category: varchar("category", { length: 100 }),
   status: statusEnum("status").notNull().default("active"),
   paymentMethod: varchar("payment_method", { length: 100 }),
+  icon: varchar("icon", { length: 100 }), // Simple Icons identifier (e.g., "netflix", "spotify")
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

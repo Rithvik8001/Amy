@@ -141,6 +141,8 @@ export async function PUT(
       updateValues.status = updateData.status;
     if (updateData.paymentMethod !== undefined)
       updateValues.paymentMethod = updateData.paymentMethod || null;
+    if (updateData.icon !== undefined)
+      updateValues.icon = updateData.icon || null;
 
     // Only update updatedAt if there are actual changes
     if (Object.keys(updateValues).length === 0) {

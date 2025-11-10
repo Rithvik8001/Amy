@@ -12,6 +12,7 @@ export const createSubscriptionSchema = z.object({
   category: z.string().max(100, "Category is too long").optional(),
   status: z.enum(["active", "cancelled", "paused"]).default("active"),
   paymentMethod: z.string().max(100, "Payment method is too long").optional(),
+  icon: z.string().max(100, "Icon identifier is too long").optional(),
 });
 
 export type CreateSubscriptionInput = z.infer<typeof createSubscriptionSchema>;
