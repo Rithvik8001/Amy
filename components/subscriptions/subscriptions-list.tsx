@@ -215,10 +215,10 @@ export default function SubscriptionsList() {
                 layout
                 whileHover={{ x: 4, scale: 1.01 }}
               >
-                <div className="flex items-start justify-between gap-4">
+                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4">
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-3 mb-2">
-                      <h3 className="text-lg font-semibold truncate">
+                    <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-2">
+                      <h3 className="text-base sm:text-lg font-semibold truncate">
                         {subscription.name}
                       </h3>
                       <Badge
@@ -233,7 +233,7 @@ export default function SubscriptionsList() {
                         </Badge>
                       )}
                     </div>
-                    <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
+                    <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
                       <div className="flex items-center gap-1.5">
                         <Calendar className="w-3.5 h-3.5" />
                         <span>
@@ -251,9 +251,9 @@ export default function SubscriptionsList() {
                       )}
                     </div>
                   </div>
-                  <div className="flex items-center gap-3 shrink-0">
-                    <div className="text-right">
-                      <div className="text-xl font-semibold">
+                  <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0">
+                    <div className="text-left sm:text-right">
+                      <div className="text-lg sm:text-xl font-semibold">
                         {formatCurrency(subscription.cost)}
                       </div>
                       <div className="text-xs text-muted-foreground">

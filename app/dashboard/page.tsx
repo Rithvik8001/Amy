@@ -19,16 +19,16 @@ export default async function DashboardPage() {
   return (
     <div className="min-h-screen bg-background">
       <nav className="sticky top-0 z-50 bg-background/80 backdrop-blur-sm">
-        <div className="max-w-2xl mx-auto px-6 py-4">
+        <div className="max-w-2xl mx-auto px-4 sm:px-6 py-3 sm:py-4">
           <div className="flex items-center justify-between">
-            <Link href="/dashboard" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-              <Logo size={28} />
-              <h1 className="text-3xl font-lavishly-yours cursor-pointer">
+            <Link href="/dashboard" className="flex items-center gap-1.5 sm:gap-2 hover:opacity-80 transition-opacity">
+              <Logo size={24} />
+              <h1 className="text-2xl sm:text-3xl font-lavishly-yours cursor-pointer">
                 Amy
               </h1>
             </Link>
-            <div className="flex items-center gap-4">
-              <span className="text-sm text-muted-foreground hidden sm:block">
+            <div className="flex items-center gap-2 sm:gap-4">
+              <span className="text-xs sm:text-sm text-muted-foreground hidden sm:block">
                 {userName}
               </span>
               <ModeToggle />
@@ -38,7 +38,7 @@ export default async function DashboardPage() {
         </div>
       </nav>
 
-      <main className="max-w-2xl mx-auto px-6 py-8">
+      <main className="max-w-2xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
         <DashboardHeader firstName={user.firstName} />
 
         <FinancialOverview />

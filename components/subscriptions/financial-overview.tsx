@@ -218,7 +218,7 @@ export default function FinancialOverview() {
       transition={{ duration: 0.3 }}
     >
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
         {[
           {
             icon: DollarSign,
@@ -262,35 +262,35 @@ export default function FinancialOverview() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3, duration: 0.4 }}
         >
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold">Upcoming Renewals</h3>
-            <div className="flex items-center gap-4 text-sm text-muted-foreground">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-2">
+            <h3 className="text-base sm:text-lg font-semibold">Upcoming Renewals</h3>
+            <div className="flex items-center gap-3 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
               <span>{stats.upcomingRenewals.next7Days} in next 7 days</span>
-              <span>{stats.upcomingRenewals.next30Days} in next 30 days</span>
+              <span className="hidden sm:inline">{stats.upcomingRenewals.next30Days} in next 30 days</span>
             </div>
           </div>
-          <div className="space-y-3">
+          <div className="grid grid-cols-2 lg:grid-cols-1 gap-3">
             {stats.upcomingRenewals.items.map((item, index) => (
               <motion.div
                 key={item.id}
-                className="py-3 px-4 hover:bg-muted/20 transition-colors rounded-lg"
+                className="py-3 px-3 sm:px-4 hover:bg-muted/20 transition-colors rounded-lg"
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.4 + index * 0.05, duration: 0.3 }}
                 whileHover={{ x: 4 }}
               >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <Calendar className="w-4 h-4 text-muted-foreground" />
-                    <span className="font-medium">{item.name}</span>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                  <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+                    <Calendar className="w-4 h-4 text-muted-foreground shrink-0" />
+                    <span className="font-medium text-sm sm:text-base">{item.name}</span>
                     {item.category && (
                       <Badge variant="outline" className="text-xs">
                         {item.category}
                       </Badge>
                     )}
                   </div>
-                  <div className="text-right">
-                    <div className="font-semibold">
+                  <div className="text-left sm:text-right">
+                    <div className="font-semibold text-sm sm:text-base">
                       {formatCurrency(parseFloat(item.cost))}
                     </div>
                     <div className="text-xs text-muted-foreground">
@@ -326,7 +326,7 @@ export default function FinancialOverview() {
               >
                 <ChartContainer
                   config={chartConfig}
-                  className="h-[300px] w-full"
+                  className="h-[200px] sm:h-[250px] md:h-[300px] w-full"
                 >
                   <AreaChart
                     data={areaChartData}
@@ -360,21 +360,32 @@ export default function FinancialOverview() {
                     </defs>
                     <CartesianGrid
                       strokeDasharray="3 3"
-                      className="stroke-muted"
+                      stroke={resolvedTheme === "dark" ? "hsl(var(--muted))" : "hsl(var(--border))"}
+                      opacity={resolvedTheme === "dark" ? 0.3 : 0.5}
                     />
                     <XAxis
                       dataKey="month"
                       tickLine={false}
                       axisLine={false}
                       tickMargin={8}
-                      tick={{ fill: "hsl(var(--muted-foreground))" }}
+                      tick={{ 
+                        fill: resolvedTheme === "dark" 
+                          ? "hsl(var(--muted-foreground))" 
+                          : "hsl(var(--foreground) / 0.7)",
+                        fontSize: 12
+                      }}
                     />
                     <YAxis
                       tickLine={false}
                       axisLine={false}
                       tickMargin={8}
                       tickFormatter={(value) => `$${value}`}
-                      tick={{ fill: "hsl(var(--muted-foreground))" }}
+                      tick={{ 
+                        fill: resolvedTheme === "dark" 
+                          ? "hsl(var(--muted-foreground))" 
+                          : "hsl(var(--foreground) / 0.7)",
+                        fontSize: 12
+                      }}
                     />
                     <ChartTooltip
                       content={

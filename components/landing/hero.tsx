@@ -9,12 +9,12 @@ export default function Hero() {
         <div className="inline-block mb-8 px-3 py-1 text-xs font-medium uppercase tracking-wider text-muted-foreground border rounded-full">
           Stop the surprises
         </div>
-        <h1 className="text-6xl md:text-7xl font-bold leading-[1.1] tracking-tight mb-6">
+        <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold leading-[1.1] tracking-tight mb-6">
           All your subscriptions
           <br />
           <span className="text-muted-foreground">in one place</span>
         </h1>
-        <p className="text-xl md:text-2xl text-muted-foreground leading-relaxed mb-10">
+        <p className="text-lg sm:text-xl md:text-2xl text-muted-foreground leading-relaxed mb-10">
           Because you&apos;re tired of surprises.
         </p>
         <div className="flex flex-col sm:flex-row gap-3">
