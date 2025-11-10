@@ -3,7 +3,21 @@
 import { useEffect } from "react";
 import { updateAppBadge } from "@/lib/pwa-badge";
 import { parseLocalDate } from "@/lib/date-utils";
-import type { Subscription } from "@/db/models/subscriptions";
+
+type Subscription = {
+  id: number;
+  userId: string;
+  name: string;
+  cost: string;
+  billingCycle: "monthly" | "yearly";
+  nextBillingDate: string;
+  category: string | null;
+  status: "active" | "cancelled" | "paused";
+  paymentMethod: string | null;
+  icon: string | null;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+};
 
 export function useAppBadge(subscriptions: Subscription[] | null) {
   useEffect(() => {
