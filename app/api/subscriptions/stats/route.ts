@@ -78,9 +78,7 @@ export async function GET() {
     // Total yearly spending = (monthly subscriptions × 12) + yearly subscriptions
     const totalYearlySpending = totalMonthly * 12 + totalYearly;
 
-    // Calculate upcoming renewals
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    // Calculate upcoming renewals (reuse today variable from above)
 
     const next7Days = new Date(today);
     next7Days.setDate(today.getDate() + 7);

@@ -1,22 +1,7 @@
 import { eq, and, sql, inArray } from "drizzle-orm";
 import db from "@/db/config";
-import { subscriptions } from "@/db/models/subscriptions";
+import { subscriptions, type Subscription } from "@/db/models/subscriptions";
 import { parseLocalDate, calculateNextBillingDate } from "@/lib/date-utils";
-
-type Subscription = {
-  id: number;
-  userId: string;
-  name: string;
-  cost: string;
-  billingCycle: "monthly" | "yearly";
-  nextBillingDate: string;
-  category: string | null;
-  status: "active" | "cancelled" | "paused";
-  paymentMethod: string | null;
-  icon: string | null;
-  createdAt: Date | string;
-  updatedAt: Date | string;
-};
 
 export async function autoRenewPastDueSubscriptions(
   subscriptionsList: Subscription[],
@@ -81,7 +66,7 @@ export async function autoRenewPastDueSubscriptions(
     // Merge updated subscriptions back into original list
     const result = subscriptionsList.map((sub) => {
       const updated = updatedMap.get(sub.id);
-      return updated ? (updated as Subscription) : sub;
+      return updated ?? sub;
     });
 
     console.log(
