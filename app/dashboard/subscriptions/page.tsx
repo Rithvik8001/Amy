@@ -7,6 +7,8 @@ import AddSubscriptionButton from "@/components/subscriptions/add-subscription-b
 import { SubscriptionsHeader } from "@/components/subscriptions-header";
 import { Logo } from "@/components/logo";
 import { NavActions } from "@/components/nav-actions";
+import OfflineIndicator from "@/components/pwa/offline-indicator";
+import InstallPrompt from "@/components/pwa/install-prompt";
 
 export default async function SubscriptionsPage() {
   const user = await currentUser();
@@ -36,6 +38,8 @@ export default async function SubscriptionsPage() {
       </nav>
 
       <main className="max-w-2xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+        <OfflineIndicator />
+        <InstallPrompt />
         <SubscriptionsHeader>
           <div>
             <h2 className="text-xl sm:text-2xl font-semibold mb-1">

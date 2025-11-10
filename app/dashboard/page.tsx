@@ -5,6 +5,8 @@ import FinancialOverview from "@/components/subscriptions/financial-overview";
 import { DashboardHeader } from "@/components/dashboard-header";
 import { Logo } from "@/components/logo";
 import { NavActions } from "@/components/nav-actions";
+import OfflineIndicator from "@/components/pwa/offline-indicator";
+import InstallPrompt from "@/components/pwa/install-prompt";
 
 export default async function DashboardPage() {
   const user = await currentUser();
@@ -34,6 +36,8 @@ export default async function DashboardPage() {
       </nav>
 
       <main className="max-w-2xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+        <OfflineIndicator />
+        <InstallPrompt />
         <DashboardHeader firstName={user.firstName} />
 
         <FinancialOverview />

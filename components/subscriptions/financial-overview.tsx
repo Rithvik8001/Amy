@@ -23,6 +23,8 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid } from "recharts";
 import { useTheme } from "next-themes";
 import { motion } from "motion/react";
 import { SubscriptionIcon } from "./subscription-icon";
+import { useAppBadge } from "@/hooks/use-app-badge";
+import type { Subscription } from "@/db/models/subscriptions";
 
 type SubscriptionStats = {
   totalMonthly: number;
@@ -57,6 +59,7 @@ const COLORS = [
 
 export default function FinancialOverview() {
   const [stats, setStats] = useState<SubscriptionStats | null>(null);
+  const [subscriptions, setSubscriptions] = useState<Subscription[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { resolvedTheme } = useTheme();
@@ -116,9 +119,26 @@ export default function FinancialOverview() {
     }
   };
 
+  const fetchSubscriptions = async () => {
+    try {
+      const response = await fetch("/api/subscriptions");
+      if (response.ok) {
+        const data = await response.json();
+        setSubscriptions(data);
+      }
+    } catch (err) {
+      // Silently fail - badge is optional
+      console.error("Failed to fetch subscriptions for badge:", err);
+    }
+  };
+
   useEffect(() => {
     fetchStats();
+    fetchSubscriptions();
   }, []);
+
+  // Update app badge with overdue and upcoming subscription counts
+  useAppBadge(subscriptions);
 
   if (loading) {
     return (

@@ -10,6 +10,7 @@ import SubscriptionFilters from "./subscription-filters";
 import { motion, AnimatePresence } from "motion/react";
 import { SubscriptionIcon } from "./subscription-icon";
 import { parseLocalDate } from "@/lib/date-utils";
+import { useAppBadge } from "@/hooks/use-app-badge";
 
 type Subscription = {
   id: number;
@@ -68,6 +69,9 @@ export default function SubscriptionsList() {
   useEffect(() => {
     fetchSubscriptions();
   }, []);
+
+  // Update app badge with overdue and upcoming subscription counts
+  useAppBadge(subscriptions);
 
   // Get unique categories from subscriptions
   const categories = useMemo(() => {
