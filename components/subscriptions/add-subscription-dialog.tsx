@@ -24,6 +24,9 @@ import { DatePicker } from "@/components/ui/date-picker";
 import { Plus } from "lucide-react";
 import { toast } from "sonner";
 import { IconPicker } from "./icon-picker";
+import { TemplateSelector } from "./template-selector";
+import { getTemplateById } from "@/lib/subscription-templates";
+import { addMonths, addYears, format } from "date-fns";
 
 type SubscriptionFormData = {
   name: string;
@@ -45,6 +48,9 @@ export default function AddSubscriptionDialog({
 }: AddSubscriptionDialogProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [selectedTemplateId, setSelectedTemplateId] = useState<
+    string | undefined
+  >();
   const [formData, setFormData] = useState<SubscriptionFormData>({
     name: "",
     cost: "",
@@ -55,6 +61,59 @@ export default function AddSubscriptionDialog({
     paymentMethod: "",
     icon: undefined,
   });
+
+  // Calculate next billing date based on billing cycle
+  const calculateNextBillingDate = (
+    billingCycle: "monthly" | "yearly"
+  ): string => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    let nextDate: Date;
+    if (billingCycle === "monthly") {
+      nextDate = addMonths(today, 1);
+    } else {
+      nextDate = addYears(today, 1);
+    }
+
+    nextDate.setHours(0, 0, 0, 0);
+    return format(nextDate, "yyyy-MM-dd");
+  };
+
+  // Handle template selection
+  const handleTemplateChange = (templateId: string | undefined) => {
+    setSelectedTemplateId(templateId);
+
+    if (templateId) {
+      const template = getTemplateById(templateId);
+      if (template) {
+        const nextBillingDate = calculateNextBillingDate(template.billingCycle);
+
+        setFormData({
+          name: template.name,
+          cost: template.cost.toString(),
+          billingCycle: template.billingCycle,
+          nextBillingDate: nextBillingDate,
+          category: template.category,
+          status: "active",
+          paymentMethod: template.paymentMethod || "",
+          icon: template.icon,
+        });
+      }
+    } else {
+      // Reset form when template is cleared
+      setFormData({
+        name: "",
+        cost: "",
+        billingCycle: "monthly",
+        nextBillingDate: "",
+        category: "",
+        status: "active",
+        paymentMethod: "",
+        icon: undefined,
+      });
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -85,6 +144,7 @@ export default function AddSubscriptionDialog({
 
       toast.success("Subscription added successfully!");
       setOpen(false);
+      setSelectedTemplateId(undefined);
       setFormData({
         name: "",
         cost: "",
@@ -105,8 +165,26 @@ export default function AddSubscriptionDialog({
     }
   };
 
+  // Reset form when dialog closes
+  const handleOpenChange = (isOpen: boolean) => {
+    setOpen(isOpen);
+    if (!isOpen) {
+      setSelectedTemplateId(undefined);
+      setFormData({
+        name: "",
+        cost: "",
+        billingCycle: "monthly",
+        nextBillingDate: "",
+        category: "",
+        status: "active",
+        paymentMethod: "",
+        icon: undefined,
+      });
+    }
+  };
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <Button>
           <Plus className="w-4 h-4 mr-2" />
@@ -122,6 +200,12 @@ export default function AddSubscriptionDialog({
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
+            <TemplateSelector
+              value={selectedTemplateId}
+              onValueChange={handleTemplateChange}
+              id="template"
+            />
+
             <div className="grid gap-2">
               <Label htmlFor="name">
                 Name <span className="text-destructive">*</span>
@@ -168,9 +252,16 @@ export default function AddSubscriptionDialog({
                 </Label>
                 <Select
                   value={formData.billingCycle}
-                  onValueChange={(value: "monthly" | "yearly") =>
-                    setFormData({ ...formData, billingCycle: value })
-                  }
+                  onValueChange={(value: "monthly" | "yearly") => {
+                    const newBillingCycle = value;
+                    const newNextBillingDate =
+                      calculateNextBillingDate(newBillingCycle);
+                    setFormData({
+                      ...formData,
+                      billingCycle: newBillingCycle,
+                      nextBillingDate: newNextBillingDate,
+                    });
+                  }}
                 >
                   <SelectTrigger id="billingCycle">
                     <SelectValue />
