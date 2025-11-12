@@ -73,9 +73,26 @@ const COLORS = [
   "hsl(var(--chart-5))",
 ];
 
+type Subscription = {
+  id: number;
+  userId: string;
+  name: string;
+  cost: string;
+  billingCycle: "monthly" | "yearly";
+  nextBillingDate: string;
+  category: string | null;
+  status: "active" | "cancelled" | "paused";
+  paymentMethod: string | null;
+  icon: string | null;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+};
+
 export default function FinancialOverview() {
   const [stats, setStats] = useState<SubscriptionStats | null>(null);
-  const [subscriptions, setSubscriptions] = useState<any[] | null>(null);
+  const [subscriptions, setSubscriptions] = useState<Subscription[] | null>(
+    null
+  );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currency, setCurrency] = useState<string>("USD");
@@ -217,7 +234,6 @@ export default function FinancialOverview() {
     );
   }
 
-
   // Prepare chart data for stacked area chart - show next 3 months
   const prepareAreaChartData = () => {
     const months = [];
@@ -233,7 +249,7 @@ export default function FinancialOverview() {
       };
 
       // Add each category's spending for this month
-      stats.categoryBreakdown.forEach((item, index) => {
+      stats.categoryBreakdown.forEach((item) => {
         monthData[item.category] = item.monthlySpending;
       });
 
@@ -275,9 +291,7 @@ export default function FinancialOverview() {
       transition={{ duration: 0.3 }}
     >
       {/* Budget Card */}
-      {stats.budget && (
-        <BudgetCard budget={stats.budget} currency={currency} />
-      )}
+      {stats.budget && <BudgetCard budget={stats.budget} currency={currency} />}
 
       {/* Summary Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
@@ -299,7 +313,7 @@ export default function FinancialOverview() {
           },
         ].map((card, index) => {
           // Add budget context to monthly/yearly cards if budget is set
-          let displayValue = card.value;
+          let displayValue: React.ReactNode = card.value;
           if (stats.budget) {
             if (card.label === "Monthly" && stats.budget.monthlyBudget) {
               const percentage = stats.budget.monthlyPercentage;
@@ -377,10 +391,14 @@ export default function FinancialOverview() {
           transition={{ delay: 0.3, duration: 0.4 }}
         >
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-2">
-            <h3 className="text-base sm:text-lg font-semibold">Upcoming Renewals</h3>
+            <h3 className="text-base sm:text-lg font-semibold">
+              Upcoming Renewals
+            </h3>
             <div className="flex items-center gap-3 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
               <span>{stats.upcomingRenewals.next7Days} in next 7 days</span>
-              <span className="hidden sm:inline">{stats.upcomingRenewals.next30Days} in next 30 days</span>
+              <span className="hidden sm:inline">
+                {stats.upcomingRenewals.next30Days} in next 30 days
+              </span>
             </div>
           </div>
           <div className="grid grid-cols-2 lg:grid-cols-1 gap-3">
@@ -402,7 +420,9 @@ export default function FinancialOverview() {
                       size={18}
                       className="shrink-0"
                     />
-                    <span className="font-medium text-sm sm:text-base">{item.name}</span>
+                    <span className="font-medium text-sm sm:text-base">
+                      {item.name}
+                    </span>
                     {item.category && (
                       <Badge variant="outline" className="text-xs">
                         {item.category}
@@ -480,7 +500,11 @@ export default function FinancialOverview() {
                     </defs>
                     <CartesianGrid
                       strokeDasharray="3 3"
-                      stroke={resolvedTheme === "dark" ? "hsl(var(--muted))" : "hsl(var(--border))"}
+                      stroke={
+                        resolvedTheme === "dark"
+                          ? "hsl(var(--muted))"
+                          : "hsl(var(--border))"
+                      }
                       opacity={resolvedTheme === "dark" ? 0.3 : 0.5}
                     />
                     <XAxis
@@ -488,11 +512,12 @@ export default function FinancialOverview() {
                       tickLine={false}
                       axisLine={false}
                       tickMargin={8}
-                      tick={{ 
-                        fill: resolvedTheme === "dark" 
-                          ? "hsl(var(--muted-foreground))" 
-                          : "hsl(var(--foreground) / 0.7)",
-                        fontSize: 12
+                      tick={{
+                        fill:
+                          resolvedTheme === "dark"
+                            ? "hsl(var(--muted-foreground))"
+                            : "hsl(var(--foreground) / 0.7)",
+                        fontSize: 12,
                       }}
                     />
                     <YAxis
@@ -500,17 +525,20 @@ export default function FinancialOverview() {
                       axisLine={false}
                       tickMargin={8}
                       tickFormatter={(value) => formatCurrency(value, currency)}
-                      tick={{ 
-                        fill: resolvedTheme === "dark" 
-                          ? "hsl(var(--muted-foreground))" 
-                          : "hsl(var(--foreground) / 0.7)",
-                        fontSize: 12
+                      tick={{
+                        fill:
+                          resolvedTheme === "dark"
+                            ? "hsl(var(--muted-foreground))"
+                            : "hsl(var(--foreground) / 0.7)",
+                        fontSize: 12,
                       }}
                     />
                     <ChartTooltip
                       content={
                         <ChartTooltipContent
-                          formatter={(value) => formatCurrency(Number(value), currency)}
+                          formatter={(value) =>
+                            formatCurrency(Number(value), currency)
+                          }
                         />
                       }
                     />
