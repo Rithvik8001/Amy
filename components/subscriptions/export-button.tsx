@@ -16,20 +16,17 @@ export default function ExportButton({ disabled = false }: ExportButtonProps) {
     try {
       setLoading(true);
 
-      // Fetch CSV from API
       const response = await fetch("/api/subscriptions/export");
 
       if (!response.ok) {
         throw new Error("Failed to export subscriptions");
       }
 
-      // Get CSV content
       const csvContent = await response.text();
 
-      // Get filename from Content-Disposition header or generate default
       const contentDisposition = response.headers.get("Content-Disposition");
       let filename = "amy-subscriptions.csv";
-      
+
       if (contentDisposition) {
         const filenameMatch = contentDisposition.match(/filename="(.+)"/);
         if (filenameMatch) {
@@ -37,7 +34,6 @@ export default function ExportButton({ disabled = false }: ExportButtonProps) {
         }
       }
 
-      // Create blob and download
       const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement("a");
@@ -73,4 +69,3 @@ export default function ExportButton({ disabled = false }: ExportButtonProps) {
     </Button>
   );
 }
-

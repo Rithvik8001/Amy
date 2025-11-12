@@ -23,7 +23,10 @@ export default async function DashboardPage() {
       <nav className="sticky top-0 z-50 bg-background/80 backdrop-blur-sm">
         <div className="max-w-2xl mx-auto px-4 sm:px-6 py-3 sm:py-4">
           <div className="flex items-center justify-between">
-            <Link href="/dashboard" className="flex items-center gap-1.5 sm:gap-2 hover:opacity-80 transition-opacity">
+            <Link
+              href="/dashboard"
+              className="flex items-center gap-1.5 sm:gap-2 hover:opacity-80 transition-opacity"
+            >
               <Logo size={24} />
               <h1 className="text-2xl sm:text-3xl font-lavishly-yours cursor-pointer">
                 Amy

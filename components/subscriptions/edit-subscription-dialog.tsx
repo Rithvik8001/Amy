@@ -82,7 +82,7 @@ export default function EditSubscriptionDialog({
       const normalizeDateForInput = (dateStr: string) => {
         if (!dateStr) return "";
         // Extract YYYY-MM-DD from date string (handles both date and datetime formats)
-        return dateStr.split('T')[0];
+        return dateStr.split("T")[0];
       };
 
       setFormData({
@@ -104,19 +104,23 @@ export default function EditSubscriptionDialog({
 
     try {
       const updatePayload: Record<string, unknown> = {};
-      
+
       // Normalize date for comparison
       const normalizeDate = (dateStr: string) => {
         // Extract YYYY-MM-DD from date string (handles both date and datetime formats)
-        return dateStr.split('T')[0];
+        return dateStr.split("T")[0];
       };
 
-      if (formData.name !== subscription.name) updatePayload.name = formData.name;
+      if (formData.name !== subscription.name)
+        updatePayload.name = formData.name;
       if (parseFloat(formData.cost) !== parseFloat(subscription.cost))
         updatePayload.cost = parseFloat(formData.cost);
       if (formData.billingCycle !== subscription.billingCycle)
         updatePayload.billingCycle = formData.billingCycle;
-      if (normalizeDate(formData.nextBillingDate) !== normalizeDate(subscription.nextBillingDate))
+      if (
+        normalizeDate(formData.nextBillingDate) !==
+        normalizeDate(subscription.nextBillingDate)
+      )
         updatePayload.nextBillingDate = formData.nextBillingDate;
       if (formData.category !== (subscription.category || ""))
         updatePayload.category = formData.category || undefined;
@@ -274,9 +278,9 @@ export default function EditSubscriptionDialog({
                 <Label htmlFor="edit-status">Status</Label>
                 <Select
                   value={formData.status}
-                  onValueChange={(
-                    value: "active" | "cancelled" | "paused"
-                  ) => setFormData({ ...formData, status: value })}
+                  onValueChange={(value: "active" | "cancelled" | "paused") =>
+                    setFormData({ ...formData, status: value })
+                  }
                 >
                   <SelectTrigger id="edit-status">
                     <SelectValue />
@@ -320,4 +324,3 @@ export default function EditSubscriptionDialog({
     </Dialog>
   );
 }
-

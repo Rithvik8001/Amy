@@ -26,26 +26,20 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Get all active subscriptions for the user
     let userSubscriptions = await db
       .select()
       .from(subscriptions)
       .where(eq(subscriptions.userId, userId));
 
-    // Check for past due subscriptions and send emails (non-blocking)
-    // Past due = billing date has PASSED (not today, not tomorrow)
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
     const pastDueSubscriptions = userSubscriptions.filter((sub) => {
       if (sub.status !== "active") return false;
-      // Parse date as local date to avoid timezone issues
       const billingDate = parseLocalDate(sub.nextBillingDate);
-      // Only past due if billing date is BEFORE today (has passed)
       return billingDate < today;
     });
 
-    // Send past due emails for each subscription (before auto-renewal)
     for (const subscription of pastDueSubscriptions) {
       sendPastDueEmail(userId, {
         id: subscription.id,
@@ -63,13 +57,11 @@ export async function GET() {
       });
     }
 
-    // Automatically renew past due subscriptions
     userSubscriptions = await autoRenewPastDueSubscriptions(
       userSubscriptions,
       userId
     );
 
-    // Calculate total monthly spending (only active subscriptions)
     const activeSubscriptions = userSubscriptions.filter(
       (sub) => sub.status === "active"
     );
@@ -86,10 +78,7 @@ export async function GET() {
       }
     });
 
-    // Total yearly spending = (monthly subscriptions × 12) + yearly subscriptions
     const totalYearlySpending = totalMonthly * 12 + totalYearly;
-
-    // Calculate upcoming renewals (reuse today variable from above)
 
     const next7Days = new Date(today);
     next7Days.setDate(today.getDate() + 7);
@@ -98,18 +87,15 @@ export async function GET() {
     next30Days.setDate(today.getDate() + 30);
 
     const upcoming7Days = activeSubscriptions.filter((sub) => {
-      // Parse date as local date to avoid timezone issues
       const billingDate = parseLocalDate(sub.nextBillingDate);
       return billingDate >= today && billingDate <= next7Days;
     });
 
     const upcoming30Days = activeSubscriptions.filter((sub) => {
-      // Parse date as local date to avoid timezone issues
       const billingDate = parseLocalDate(sub.nextBillingDate);
       return billingDate >= today && billingDate <= next30Days;
     });
 
-    // Calculate spending by category
     const categoryBreakdown: Record<string, number> = {};
     activeSubscriptions.forEach((sub) => {
       const category = sub.category || "Uncategorized";
@@ -123,7 +109,6 @@ export async function GET() {
       }
     });
 
-    // Convert category breakdown to array format
     const categoryStats = Object.entries(categoryBreakdown).map(
       ([category, monthlySpending]) => ({
         category,
@@ -131,14 +116,11 @@ export async function GET() {
       })
     );
 
-    // Sort by spending (descending)
     categoryStats.sort((a, b) => b.monthlySpending - a.monthlySpending);
 
-    // Get user's currency preference and budget settings
     const currency = await getUserCurrency(userId);
     const budgetSettings = await getUserBudgetSettings(userId);
 
-    // Calculate budget stats
     const monthlyPeriod = getBudgetPeriodInfo("monthly");
     const yearlyPeriod = getBudgetPeriodInfo("yearly");
 
@@ -186,9 +168,7 @@ export async function GET() {
       ? budgetSettings.yearlyBudget - totalYearlySpending
       : null;
 
-    // Check and send budget alerts (non-blocking)
     if (budgetSettings.monthlyBudget) {
-      // Monthly budget alerts
       if (monthlyStatus === "approaching") {
         sendBudgetApproachingEmail(
           userId,
@@ -219,7 +199,6 @@ export async function GET() {
         });
       }
 
-      // Check projected exceed
       if (
         projectedMonthlySpending > budgetSettings.monthlyBudget &&
         monthlyStatus !== "exceeded"
@@ -240,7 +219,6 @@ export async function GET() {
     }
 
     if (budgetSettings.yearlyBudget) {
-      // Yearly budget alerts
       if (yearlyStatus === "approaching") {
         sendBudgetApproachingEmail(
           userId,
@@ -271,7 +249,6 @@ export async function GET() {
         });
       }
 
-      // Check projected exceed
       if (
         projectedYearlySpending > budgetSettings.yearlyBudget &&
         yearlyStatus !== "exceeded"

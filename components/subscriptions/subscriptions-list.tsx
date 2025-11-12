@@ -189,7 +189,6 @@ export default function SubscriptionsList() {
     );
   }
 
-
   const getStatusColor = (status: string) => {
     switch (status) {
       case "active":
@@ -244,94 +243,102 @@ export default function SubscriptionsList() {
             {filteredAndSortedSubscriptions.map((subscription, index) => {
               const overdue = isOverdue(subscription);
               const daysOverdue = getDaysOverdue(subscription);
-              
+
               return (
-              <motion.div
-                key={subscription.id}
-                className={`group py-4 hover:bg-muted/20 transition-colors rounded-lg px-2 -mx-2 cursor-pointer ${
-                  overdue ? "border-l-2 border-destructive" : ""
-                }`}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, x: -20, scale: 0.95 }}
-                transition={{ 
-                  delay: index * 0.05,
-                  duration: 0.3,
-                  layout: { duration: 0.2 }
-                }}
-                layout
-                whileHover={{ x: 4, scale: 1.01 }}
-              >
-                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-2">
-                      <SubscriptionIcon
-                        iconId={subscription.icon}
-                        name={subscription.name}
-                        size={20}
-                        className="shrink-0"
-                      />
-                      <h3 className="text-base sm:text-lg font-semibold truncate">
-                        {subscription.name}
-                      </h3>
-                      <Badge
-                        variant={getStatusColor(subscription.status)}
-                        className="text-xs shrink-0"
-                      >
-                        {subscription.status}
-                      </Badge>
-                      {overdue && (
-                        <Badge variant="destructive" className="text-xs shrink-0 flex items-center gap-1">
-                          <AlertCircle className="w-3 h-3" />
-                          {daysOverdue === 1 ? "1 day overdue" : `${daysOverdue} days overdue`}
+                <motion.div
+                  key={subscription.id}
+                  className={`group py-4 hover:bg-muted/20 transition-colors rounded-lg px-2 -mx-2 cursor-pointer ${
+                    overdue ? "border-l-2 border-destructive" : ""
+                  }`}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, x: -20, scale: 0.95 }}
+                  transition={{
+                    delay: index * 0.05,
+                    duration: 0.3,
+                    layout: { duration: 0.2 },
+                  }}
+                  layout
+                  whileHover={{ x: 4, scale: 1.01 }}
+                >
+                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-2">
+                        <SubscriptionIcon
+                          iconId={subscription.icon}
+                          name={subscription.name}
+                          size={20}
+                          className="shrink-0"
+                        />
+                        <h3 className="text-base sm:text-lg font-semibold truncate">
+                          {subscription.name}
+                        </h3>
+                        <Badge
+                          variant={getStatusColor(subscription.status)}
+                          className="text-xs shrink-0"
+                        >
+                          {subscription.status}
                         </Badge>
-                      )}
-                      {subscription.category && (
-                        <Badge variant="outline" className="text-xs shrink-0">
-                          {subscription.category}
-                        </Badge>
-                      )}
-                    </div>
-                    <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
-                      <div className="flex items-center gap-1.5">
-                        <Calendar className="w-3.5 h-3.5" />
-                        <span>
-                          {format(
-                            new Date(subscription.nextBillingDate),
-                            "MMM dd, yyyy"
-                          )}
-                        </span>
+                        {overdue && (
+                          <Badge
+                            variant="destructive"
+                            className="text-xs shrink-0 flex items-center gap-1"
+                          >
+                            <AlertCircle className="w-3 h-3" />
+                            {daysOverdue === 1
+                              ? "1 day overdue"
+                              : `${daysOverdue} days overdue`}
+                          </Badge>
+                        )}
+                        {subscription.category && (
+                          <Badge variant="outline" className="text-xs shrink-0">
+                            {subscription.category}
+                          </Badge>
+                        )}
                       </div>
-                      {subscription.paymentMethod && (
+                      <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
                         <div className="flex items-center gap-1.5">
-                          <CreditCard className="w-3.5 h-3.5" />
-                          <span>{subscription.paymentMethod}</span>
+                          <Calendar className="w-3.5 h-3.5" />
+                          <span>
+                            {format(
+                              new Date(subscription.nextBillingDate),
+                              "MMM dd, yyyy"
+                            )}
+                          </span>
                         </div>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0">
-                    <div className="text-left sm:text-right">
-                      <div className="text-lg sm:text-xl font-semibold">
-                        {formatCurrency(parseFloat(subscription.cost), currency)}
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        /{subscription.billingCycle}
+                        {subscription.paymentMethod && (
+                          <div className="flex items-center gap-1.5">
+                            <CreditCard className="w-3.5 h-3.5" />
+                            <span>{subscription.paymentMethod}</span>
+                          </div>
+                        )}
                       </div>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <EditSubscriptionDialog
-                        subscription={subscription}
-                        onSuccess={fetchSubscriptions}
-                      />
-                      <DeleteSubscriptionDialog
-                        subscription={subscription}
-                        onSuccess={fetchSubscriptions}
-                      />
+                    <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0">
+                      <div className="text-left sm:text-right">
+                        <div className="text-lg sm:text-xl font-semibold">
+                          {formatCurrency(
+                            parseFloat(subscription.cost),
+                            currency
+                          )}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          /{subscription.billingCycle}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <EditSubscriptionDialog
+                          subscription={subscription}
+                          onSuccess={fetchSubscriptions}
+                        />
+                        <DeleteSubscriptionDialog
+                          subscription={subscription}
+                          onSuccess={fetchSubscriptions}
+                        />
+                      </div>
                     </div>
                   </div>
-                </div>
-              </motion.div>
+                </motion.div>
               );
             })}
           </AnimatePresence>

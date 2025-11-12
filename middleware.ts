@@ -12,7 +12,6 @@ const isPublicRoute = createRouteMatcher([
 export default clerkMiddleware(async (auth, req) => {
   const { userId } = await auth();
 
-  // Skip auth for webhook routes
   if (req.nextUrl.pathname.startsWith("/api/webhooks")) {
     return NextResponse.next();
   }

@@ -1,17 +1,12 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import {
-  getUserCurrency,
   setUserCurrency,
   getUserBudgetSettings,
   setUserBudgetSettings,
 } from "@/lib/user-settings";
 import { updateCurrencySchema } from "@/lib/validations/currency";
 
-/**
- * GET /api/user/settings
- * Fetch user's full settings including currency and budgets
- */
 export async function GET() {
   try {
     const { userId } = await auth();
@@ -32,11 +27,6 @@ export async function GET() {
   }
 }
 
-/**
- * PUT /api/user/settings
- * Update user's settings (currency, budgets, threshold)
- * Accepts partial updates - only provided fields are updated
- */
 export async function PUT(request: Request) {
   try {
     const { userId } = await auth();
@@ -47,7 +37,6 @@ export async function PUT(request: Request) {
 
     const body = await request.json();
 
-    // Validate request body
     const validationResult = updateCurrencySchema.safeParse(body);
 
     if (!validationResult.success) {
@@ -60,19 +49,13 @@ export async function PUT(request: Request) {
       );
     }
 
-    const {
-      currency,
-      monthlyBudget,
-      yearlyBudget,
-      budgetAlertThreshold,
-    } = validationResult.data;
+    const { currency, monthlyBudget, yearlyBudget, budgetAlertThreshold } =
+      validationResult.data;
 
-    // Update currency if provided
     if (currency !== undefined) {
       await setUserCurrency(userId, currency);
     }
 
-    // Update budget settings if provided
     if (
       monthlyBudget !== undefined ||
       yearlyBudget !== undefined ||
@@ -86,7 +69,6 @@ export async function PUT(request: Request) {
       );
     }
 
-    // Return updated settings
     const updatedSettings = await getUserBudgetSettings(userId);
 
     return NextResponse.json(updatedSettings);
@@ -98,4 +80,3 @@ export async function PUT(request: Request) {
     );
   }
 }
-

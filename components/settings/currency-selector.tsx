@@ -8,14 +8,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { getSupportedCurrencies, formatCurrencyForDisplay } from "@/lib/currency-utils";
+import {
+  getSupportedCurrencies,
+  formatCurrencyForDisplay,
+} from "@/lib/currency-utils";
 import { toast } from "sonner";
 
 export function CurrencySelector() {
   const [currency, setCurrency] = useState<string>("USD");
   const [loading, setLoading] = useState(true);
 
-  // Fetch current currency on mount
   useEffect(() => {
     const fetchCurrency = async () => {
       try {
@@ -50,11 +52,13 @@ export function CurrencySelector() {
 
       setCurrency(newCurrency);
       toast.success("Currency updated successfully");
-      
-      // Trigger a custom event to notify other components
-      window.dispatchEvent(new CustomEvent('currencyChanged', { detail: { currency: newCurrency } }));
-      
-      // Reload page to update all currency displays
+
+      window.dispatchEvent(
+        new CustomEvent("currencyChanged", {
+          detail: { currency: newCurrency },
+        })
+      );
+
       window.location.reload();
     } catch (error) {
       toast.error("Failed to update currency");
@@ -89,4 +93,3 @@ export function CurrencySelector() {
     </Select>
   );
 }
-

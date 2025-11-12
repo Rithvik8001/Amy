@@ -20,27 +20,26 @@ export function getBudgetAlertEmailHtml(
   let subjectText = "";
   let statusText = "";
   let messageText = "";
-  let progressBarColor = "#f59e0b"; // Yellow for approaching
+  let progressBarColor = "#f59e0b";
 
   if (status === "exceeded") {
     subjectText = "Budget Exceeded";
     statusText = "You've exceeded your budget";
     messageText = `You've spent ${formattedSpent} of your ${periodText}ly budget of ${formattedBudget} (${formattedPercentage}%).`;
-    progressBarColor = "#ef4444"; // Red for exceeded
+    progressBarColor = "#ef4444";
   } else if (status === "approaching") {
     subjectText = "Budget Alert";
     statusText = "You're approaching your budget";
     messageText = `You've spent ${formattedSpent} of your ${periodText}ly budget of ${formattedBudget} (${formattedPercentage}%).`;
-    progressBarColor = "#f59e0b"; // Yellow for approaching
+    progressBarColor = "#f59e0b";
   } else if (status === "projected_exceed" && projectedSpending) {
     const formattedProjected = formatCurrency(projectedSpending, currency);
     subjectText = "Projected Budget Alert";
     statusText = "You're on track to exceed your budget";
     messageText = `Based on your current spending rate, you're projected to spend ${formattedProjected} this ${periodText}, which exceeds your budget of ${formattedBudget}.`;
-    progressBarColor = "#f59e0b"; // Yellow for projected exceed
+    progressBarColor = "#f59e0b";
   }
 
-  // Calculate progress bar width (cap at 100%)
   const progressWidth = Math.min(percentage, 100);
 
   return `
@@ -77,7 +76,9 @@ export function getBudgetAlertEmailHtml(
               <!-- Budget Progress Bar -->
               <div style="margin: 24px 0; background-color: #f3f4f6; border-radius: 8px; height: 24px; overflow: hidden; position: relative;">
                 <div style="background-color: ${progressBarColor}; height: 100%; width: ${progressWidth}%; transition: width 0.3s ease;"></div>
-                <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 12px; font-weight: 600; color: ${percentage > 50 ? '#ffffff' : '#000000'};">
+                <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 12px; font-weight: 600; color: ${
+                  percentage > 50 ? "#ffffff" : "#000000"
+                };">
                   ${formattedPercentage}%
                 </div>
               </div>
@@ -96,21 +97,31 @@ export function getBudgetAlertEmailHtml(
                     <span style="font-size: 16px; font-weight: 600; color: #000000; float: right;">${formattedBudget}</span>
                   </td>
                 </tr>
-                ${status === "exceeded" ? `
+                ${
+                  status === "exceeded"
+                    ? `
                 <tr>
                   <td style="padding: 12px 0;">
                     <span style="font-size: 14px; color: #666666;">Over Budget:</span>
-                    <span style="font-size: 16px; font-weight: 600; color: #ef4444; float: right;">${formatCurrency(spent - budget, currency)}</span>
+                    <span style="font-size: 16px; font-weight: 600; color: #ef4444; float: right;">${formatCurrency(
+                      spent - budget,
+                      currency
+                    )}</span>
                   </td>
                 </tr>
-                ` : `
+                `
+                    : `
                 <tr>
                   <td style="padding: 12px 0;">
                     <span style="font-size: 14px; color: #666666;">Remaining:</span>
-                    <span style="font-size: 16px; font-weight: 600; color: #000000; float: right;">${formatCurrency(budget - spent, currency)}</span>
+                    <span style="font-size: 16px; font-weight: 600; color: #000000; float: right;">${formatCurrency(
+                      budget - spent,
+                      currency
+                    )}</span>
                   </td>
                 </tr>
-                `}
+                `
+                }
               </table>
               
               <p style="margin: 24px 0 0 0; font-size: 14px; line-height: 1.6; color: #666666;">
@@ -146,4 +157,3 @@ export function getBudgetAlertEmailHtml(
 </html>
 `;
 }
-

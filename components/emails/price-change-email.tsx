@@ -14,7 +14,10 @@ export function getPriceChangeEmailHtml(
   const formattedNewCost = formatCurrency(parseFloat(newCost), currency);
   const costDifference = parseFloat(newCost) - parseFloat(oldCost);
   const isIncrease = costDifference > 0;
-  const formattedDifference = formatCurrency(Math.abs(costDifference), currency);
+  const formattedDifference = formatCurrency(
+    Math.abs(costDifference),
+    currency
+  );
 
   return `
 <!DOCTYPE html>

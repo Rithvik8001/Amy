@@ -11,10 +11,8 @@ export default function OfflineIndicator() {
 
   useEffect(() => {
     setMounted(true);
-    // Set initial online status
     setIsOnline(navigator.onLine);
 
-    // Listen for online/offline events
     const handleOnline = () => setIsOnline(true);
     const handleOffline = () => setIsOnline(false);
 
@@ -42,7 +40,7 @@ export default function OfflineIndicator() {
           <Alert variant="destructive" className="max-w-2xl mx-auto">
             <WifiOff className="h-4 w-4" />
             <AlertDescription>
-              You're offline. Some features may be limited.
+              You are offline. Some features may not work as expected.
             </AlertDescription>
           </Alert>
         </motion.div>
@@ -50,4 +48,3 @@ export default function OfflineIndicator() {
     </AnimatePresence>
   );
 }
-

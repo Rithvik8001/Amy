@@ -4,7 +4,6 @@ export default function SignUpPage() {
   return (
     <div className="min-h-screen flex flex-col max-w-5xl w-full mx-auto border-l border-r border-gray-200 dark:border-gray-900">
       <style>{`
-        /* Hide Clerk social auth buttons */
         [data-testid="socialButtonsBlockButton"] {
           display: none !important;
         }

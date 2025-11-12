@@ -27,20 +27,15 @@ export async function GET() {
       .where(eq(subscriptions.userId, userId))
       .orderBy(asc(subscriptions.nextBillingDate));
 
-    // Check for past due subscriptions and send emails (non-blocking)
-    // Past due = billing date has PASSED (not today, not tomorrow)
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
     const pastDueSubscriptions = userSubscriptions.filter((sub) => {
       if (sub.status !== "active") return false;
-      // Parse date as local date to avoid timezone issues
       const billingDate = parseLocalDate(sub.nextBillingDate);
-      // Only past due if billing date is BEFORE today (has passed)
       return billingDate < today;
     });
 
-    // Send past due emails for each subscription (before auto-renewal)
     for (const subscription of pastDueSubscriptions) {
       sendPastDueEmail(userId, {
         id: subscription.id,
@@ -58,7 +53,6 @@ export async function GET() {
       });
     }
 
-    // Automatically renew past due subscriptions
     userSubscriptions = await autoRenewPastDueSubscriptions(
       userSubscriptions,
       userId
@@ -84,7 +78,6 @@ export async function POST(request: Request) {
 
     const body = await request.json();
 
-    // Validate request body with Zod
     const validationResult = createSubscriptionSchema.safeParse(body);
 
     if (!validationResult.success) {
@@ -125,7 +118,6 @@ export async function POST(request: Request) {
 
     const createdSubscription = newSubscription[0];
 
-    // Check if renewal reminder should be sent (3 days or 1 day before due date)
     if (status === "active") {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
@@ -134,12 +126,9 @@ export async function POST(request: Request) {
       const oneDayFromNow = new Date(today);
       oneDayFromNow.setDate(today.getDate() + 1);
 
-      // Parse date as local date to avoid timezone issues
       const billingDate = parseLocalDate(nextBillingDate);
 
-      // Check if billing date is exactly 3 days away
       if (billingDate.getTime() === threeDaysFromNow.getTime()) {
-        // Send renewal reminder email (non-blocking)
         sendRenewalReminderEmail(userId, {
           id: createdSubscription.id,
           userId: createdSubscription.userId,
@@ -156,9 +145,7 @@ export async function POST(request: Request) {
         });
       }
 
-      // Check if billing date is exactly 1 day away
       if (billingDate.getTime() === oneDayFromNow.getTime()) {
-        // Send 1-day renewal reminder email (non-blocking)
         sendRenewalReminder1DayEmail(userId, {
           id: createdSubscription.id,
           userId: createdSubscription.userId,
@@ -176,7 +163,6 @@ export async function POST(request: Request) {
       }
     }
 
-    // Check budget status and send alerts if needed (non-blocking)
     checkAndSendBudgetAlerts(userId).catch((error) => {
       console.error(
         "Error checking budget alerts after subscription creation (non-blocking):",

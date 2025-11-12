@@ -5,7 +5,6 @@ import { redirect } from "next/navigation";
 export default async function Page() {
   const user = await currentUser();
 
-  // Redirect authenticated users to dashboard
   if (user) {
     redirect("/dashboard");
   }

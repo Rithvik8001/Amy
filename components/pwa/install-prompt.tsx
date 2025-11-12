@@ -21,65 +21,56 @@ export default function InstallPrompt() {
   useEffect(() => {
     setMounted(true);
 
-    // Check if app is already installed (standalone mode)
     const isStandalone =
       window.matchMedia("(display-mode: standalone)").matches ||
       (window.navigator as any).standalone === true;
     setIsInstalled(isStandalone);
 
     if (isStandalone) {
-      return; // Don't show prompt if already installed
-    }
-
-    // Check if already dismissed (permanent dismissal - user can install manually later)
-    const dismissed = localStorage.getItem("pwa-install-dismissed");
-    if (dismissed === "true") {
-      setIsDismissed(true);
-      // Don't listen for event if already dismissed
       return;
     }
 
-    // Listen for beforeinstallprompt event
+    const dismissed = localStorage.getItem("pwa-install-dismissed");
+    if (dismissed === "true") {
+      setIsDismissed(true);
+      return;
+    }
+
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
-      // Only show if not dismissed - respect user's choice
       setDeferredPrompt(e as BeforeInstallPromptEvent);
     };
 
     window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
 
     return () => {
-      window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+      window.removeEventListener(
+        "beforeinstallprompt",
+        handleBeforeInstallPrompt
+      );
     };
   }, []);
 
   const handleInstall = async () => {
     if (!deferredPrompt) {
-      // Fallback: Show browser's native install prompt
-      // This works on iOS Safari and other browsers
       return;
     }
 
     try {
-      // Show install prompt
       await deferredPrompt.prompt();
 
-      // Wait for user response
       const { outcome } = await deferredPrompt.userChoice;
 
       if (outcome === "accepted") {
-        // User accepted, clear the prompt
         setDeferredPrompt(null);
         setIsInstalled(true);
       } else {
-        // User dismissed, store permanent dismissal
         localStorage.setItem("pwa-install-dismissed", "true");
         setIsDismissed(true);
         setDeferredPrompt(null);
       }
     } catch (error) {
       console.error("Error showing install prompt:", error);
-      // If prompt fails, just dismiss
       localStorage.setItem("pwa-install-dismissed", "true");
       setIsDismissed(true);
       setDeferredPrompt(null);
@@ -94,13 +85,8 @@ export default function InstallPrompt() {
 
   if (!mounted) return null;
 
-  // Don't show if already installed
   if (isInstalled) return null;
 
-  // Show prompt if:
-  // 1. Event fired (deferredPrompt exists) AND not dismissed, OR
-  // 2. Event hasn't fired yet but we want to show manual install instructions
-  // For now, only show if deferredPrompt exists (event fired)
   if (!deferredPrompt || isDismissed) return null;
 
   return (
@@ -145,4 +131,3 @@ export default function InstallPrompt() {
     </AnimatePresence>
   );
 }
-

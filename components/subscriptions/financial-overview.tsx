@@ -100,7 +100,6 @@ export default function FinancialOverview() {
   const [mounted, setMounted] = useState(false);
   const [categoryColors, setCategoryColors] = useState<string[]>([]);
 
-  // Get computed RGB colors from CSS variables (for SVG compatibility)
   useEffect(() => {
     if (typeof window === "undefined" || !mounted) return;
 
@@ -108,7 +107,6 @@ export default function FinancialOverview() {
     const colors: string[] = [];
 
     colorKeys.forEach((colorKey) => {
-      // Create a temporary element to get computed color
       const tempEl = document.createElement("div");
       tempEl.style.color = `hsl(var(--${colorKey}))`;
       tempEl.style.position = "absolute";
@@ -126,7 +124,6 @@ export default function FinancialOverview() {
     setCategoryColors(colors);
   }, [mounted, resolvedTheme]);
 
-  // Get color for a category by index
   const getCategoryColor = (index: number) => {
     if (categoryColors.length === 0) return "#8884d8";
     return categoryColors[index % categoryColors.length];
@@ -145,7 +142,6 @@ export default function FinancialOverview() {
       }
       const data = await response.json();
       setStats(data);
-      // Update currency from stats if available
       if (data.currency) {
         setCurrency(data.currency);
       }
@@ -165,7 +161,6 @@ export default function FinancialOverview() {
         setSubscriptions(data);
       }
     } catch (err) {
-      // Silently fail - badge is optional
       console.error("Failed to fetch subscriptions for badge:", err);
     }
   };
@@ -175,7 +170,6 @@ export default function FinancialOverview() {
     fetchSubscriptions();
   }, []);
 
-  // Fetch user currency preference
   useEffect(() => {
     const fetchCurrency = async () => {
       try {
@@ -192,7 +186,6 @@ export default function FinancialOverview() {
     fetchCurrency();
   }, []);
 
-  // Update app badge with overdue and upcoming subscription counts
   useAppBadge(subscriptions);
 
   if (loading) {
@@ -234,7 +227,6 @@ export default function FinancialOverview() {
     );
   }
 
-  // Prepare chart data for stacked area chart - show next 3 months
   const prepareAreaChartData = () => {
     const months = [];
     const currentDate = new Date();
@@ -248,7 +240,6 @@ export default function FinancialOverview() {
         month: monthName,
       };
 
-      // Add each category's spending for this month
       stats.categoryBreakdown.forEach((item) => {
         monthData[item.category] = item.monthlySpending;
       });
@@ -261,7 +252,6 @@ export default function FinancialOverview() {
 
   const areaChartData = stats ? prepareAreaChartData() : [];
 
-  // Build chart config for each category with theme-aware colors
   const chartConfig: Record<
     string,
     { label: string; theme?: Record<string, string> }
@@ -270,7 +260,6 @@ export default function FinancialOverview() {
   };
 
   stats?.categoryBreakdown.forEach((item, index) => {
-    // Use theme-aware colors that work in both light and dark mode
     const colorKeys = ["chart-1", "chart-2", "chart-3", "chart-4", "chart-5"];
     const colorKey = colorKeys[index % colorKeys.length];
 
@@ -290,10 +279,8 @@ export default function FinancialOverview() {
       animate={{ opacity: 1 }}
       transition={{ duration: 0.3 }}
     >
-      {/* Budget Card */}
       {stats.budget && <BudgetCard budget={stats.budget} currency={currency} />}
 
-      {/* Summary Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
         {[
           {
@@ -312,7 +299,6 @@ export default function FinancialOverview() {
             value: stats.totalActiveSubscriptions,
           },
         ].map((card, index) => {
-          // Add budget context to monthly/yearly cards if budget is set
           let displayValue: React.ReactNode = card.value;
           if (stats.budget) {
             if (card.label === "Monthly" && stats.budget.monthlyBudget) {
@@ -383,7 +369,6 @@ export default function FinancialOverview() {
         })}
       </div>
 
-      {/* Upcoming Renewals */}
       {stats.upcomingRenewals.items.length > 0 && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -444,7 +429,6 @@ export default function FinancialOverview() {
         </motion.div>
       )}
 
-      {/* Category Breakdown */}
       {stats.categoryBreakdown.length > 0 && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -608,7 +592,6 @@ export default function FinancialOverview() {
         </motion.div>
       )}
 
-      {/* Empty State */}
       {stats.totalActiveSubscriptions === 0 && (
         <motion.div
           className="py-16 text-center"

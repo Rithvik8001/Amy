@@ -13,7 +13,6 @@ import { parseLocalDate } from "@/lib/date-utils";
 import { autoRenewPastDueSubscriptions } from "@/lib/subscription-utils";
 import { checkAndSendBudgetAlerts } from "@/lib/budget-alerts";
 
-// GET /api/subscriptions/[id] - Get single subscription
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> | { id: string } }
@@ -53,14 +52,12 @@ export async function GET(
       );
     }
 
-    // Check if subscription is past due and auto-renew if needed
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const billingDate = parseLocalDate(subscription[0].nextBillingDate);
-    
+
     let finalSubscription = subscription[0];
-    
-    // Auto-renew if past due and active
+
     if (subscription[0].status === "active" && billingDate < today) {
       const renewedSubscriptions = await autoRenewPastDueSubscriptions(
         [subscription[0]],
@@ -81,7 +78,6 @@ export async function GET(
   }
 }
 
-// PUT /api/subscriptions/[id] - Update subscription
 export async function PUT(
   request: Request,
   { params }: { params: Promise<{ id: string }> | { id: string } }
@@ -164,9 +160,7 @@ export async function PUT(
     if (updateData.icon !== undefined)
       updateValues.icon = updateData.icon || null;
 
-    // Only update updatedAt if there are actual changes
     if (Object.keys(updateValues).length === 0) {
-      // No changes, return existing subscription
       return NextResponse.json(existingSubscription[0]);
     }
 
@@ -193,7 +187,6 @@ export async function PUT(
 
     const updatedSub = updatedSubscription[0];
 
-    // Check for price change and send email if needed
     if (
       updateData.cost !== undefined &&
       oldStatus === "active" &&
@@ -201,7 +194,6 @@ export async function PUT(
     ) {
       const newCost = updatedSub.cost;
       if (oldCost !== newCost) {
-        // Price changed - send email (non-blocking)
         sendPriceChangeEmail(
           userId,
           {
@@ -224,7 +216,6 @@ export async function PUT(
       }
     }
 
-    // Check if renewal reminder should be sent (3 days or 1 day before due date)
     const finalNextBillingDate =
       updateData.nextBillingDate !== undefined
         ? updateData.nextBillingDate
@@ -240,12 +231,9 @@ export async function PUT(
       const oneDayFromNow = new Date(today);
       oneDayFromNow.setDate(today.getDate() + 1);
 
-      // Parse date as local date to avoid timezone issues
       const billingDate = parseLocalDate(finalNextBillingDate);
 
-      // Check if billing date is exactly 3 days away
       if (billingDate.getTime() === threeDaysFromNow.getTime()) {
-        // Send renewal reminder email (non-blocking)
         sendRenewalReminderEmail(userId, {
           id: updatedSub.id,
           userId: updatedSub.userId,
@@ -264,7 +252,6 @@ export async function PUT(
 
       // Check if billing date is exactly 1 day away
       if (billingDate.getTime() === oneDayFromNow.getTime()) {
-        // Send 1-day renewal reminder email (non-blocking)
         sendRenewalReminder1DayEmail(userId, {
           id: updatedSub.id,
           userId: updatedSub.userId,
@@ -282,8 +269,6 @@ export async function PUT(
       }
     }
 
-    // Check budget status and send alerts if needed (non-blocking)
-    // Only check if cost or status changed (affects spending totals)
     if (
       updateData.cost !== undefined ||
       updateData.status !== undefined ||
@@ -301,7 +286,6 @@ export async function PUT(
   } catch (error) {
     console.error("Error updating subscription:", error);
 
-    // Provide more detailed error information
     const errorMessage =
       error instanceof Error
         ? error.message
@@ -324,7 +308,6 @@ export async function PUT(
   }
 }
 
-// DELETE /api/subscriptions/[id] - Delete subscription
 export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ id: string }> | { id: string } }
@@ -346,7 +329,6 @@ export async function DELETE(
       );
     }
 
-    // Check if subscription exists and belongs to user
     const existingSubscription = await db
       .select()
       .from(subscriptions)
