@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import SubscriptionsList from "@/components/subscriptions/subscriptions-list";
 import AddSubscriptionButton from "@/components/subscriptions/add-subscription-button";
+import ExportButton from "@/components/subscriptions/export-button";
 import { SubscriptionsHeader } from "@/components/subscriptions-header";
 import { Logo } from "@/components/logo";
 import { NavActions } from "@/components/nav-actions";
@@ -53,6 +54,7 @@ export default async function SubscriptionsPage() {
             <Link href="/dashboard">
               <Button variant="outline" className="text-xs sm:text-sm">Overview</Button>
             </Link>
+            <ExportButton />
             <AddSubscriptionButton />
           </div>
         </SubscriptionsHeader>
