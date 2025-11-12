@@ -7,7 +7,7 @@ const currencyCodes = SUPPORTED_CURRENCIES.map((c) => c.code) as [string, ...str
  * Zod schema for currency validation
  */
 export const currencySchema = z.enum(currencyCodes as [string, ...string[]], {
-  errorMap: () => ({ message: "Invalid currency code" }),
+  message: "Invalid currency code",
 });
 
 /**
