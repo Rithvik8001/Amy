@@ -50,14 +50,17 @@ export default async function SubscriptionsPage() {
               Manage all your subscriptions in one place
             </p>
           </div>
-          <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+        </SubscriptionsHeader>
+
+        <div className="flex items-center justify-between gap-2 sm:gap-3 mb-8 flex-wrap">
+          <div className="flex items-center gap-2 sm:gap-3">
             <Link href="/dashboard">
               <Button variant="outline" className="text-xs sm:text-sm">Overview</Button>
             </Link>
             <ExportButton />
-            <AddSubscriptionButton />
           </div>
-        </SubscriptionsHeader>
+          <AddSubscriptionButton />
+        </div>
 
         <SubscriptionsList />
       </main>
