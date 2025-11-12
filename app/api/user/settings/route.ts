@@ -1,11 +1,16 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
-import { getUserCurrency, setUserCurrency } from "@/lib/user-settings";
+import {
+  getUserCurrency,
+  setUserCurrency,
+  getUserBudgetSettings,
+  setUserBudgetSettings,
+} from "@/lib/user-settings";
 import { updateCurrencySchema } from "@/lib/validations/currency";
 
 /**
  * GET /api/user/settings
- * Fetch user's currency preference (defaults to USD if not set)
+ * Fetch user's full settings including currency and budgets
  */
 export async function GET() {
   try {
@@ -15,9 +20,9 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const currency = await getUserCurrency(userId);
+    const settings = await getUserBudgetSettings(userId);
 
-    return NextResponse.json({ currency });
+    return NextResponse.json(settings);
   } catch (error) {
     console.error("Error fetching user settings:", error);
     return NextResponse.json(
@@ -29,7 +34,8 @@ export async function GET() {
 
 /**
  * PUT /api/user/settings
- * Update user's currency preference
+ * Update user's settings (currency, budgets, threshold)
+ * Accepts partial updates - only provided fields are updated
  */
 export async function PUT(request: Request) {
   try {
@@ -54,12 +60,36 @@ export async function PUT(request: Request) {
       );
     }
 
-    const { currency } = validationResult.data;
+    const {
+      currency,
+      monthlyBudget,
+      yearlyBudget,
+      budgetAlertThreshold,
+    } = validationResult.data;
 
-    // Update user currency
-    await setUserCurrency(userId, currency);
+    // Update currency if provided
+    if (currency !== undefined) {
+      await setUserCurrency(userId, currency);
+    }
 
-    return NextResponse.json({ currency });
+    // Update budget settings if provided
+    if (
+      monthlyBudget !== undefined ||
+      yearlyBudget !== undefined ||
+      budgetAlertThreshold !== undefined
+    ) {
+      await setUserBudgetSettings(
+        userId,
+        monthlyBudget ?? undefined,
+        yearlyBudget ?? undefined,
+        budgetAlertThreshold
+      );
+    }
+
+    // Return updated settings
+    const updatedSettings = await getUserBudgetSettings(userId);
+
+    return NextResponse.json(updatedSettings);
   } catch (error) {
     console.error("Error updating user settings:", error);
     return NextResponse.json(

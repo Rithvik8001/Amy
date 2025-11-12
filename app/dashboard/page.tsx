@@ -7,6 +7,7 @@ import { Logo } from "@/components/logo";
 import { NavActions } from "@/components/nav-actions";
 import OfflineIndicator from "@/components/pwa/offline-indicator";
 import InstallPrompt from "@/components/pwa/install-prompt";
+import { BudgetOnboardingPrompt } from "@/components/settings/budget-onboarding-prompt";
 
 export default async function DashboardPage() {
   const user = await currentUser();
@@ -38,6 +39,7 @@ export default async function DashboardPage() {
       <main className="max-w-2xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
         <OfflineIndicator />
         <InstallPrompt />
+        <BudgetOnboardingPrompt />
         <DashboardHeader firstName={user.firstName} />
 
         <FinancialOverview />

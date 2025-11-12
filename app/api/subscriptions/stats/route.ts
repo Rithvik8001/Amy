@@ -3,10 +3,20 @@ import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import db from "@/db/config";
 import { subscriptions } from "@/db/models/subscriptions";
-import { sendPastDueEmail } from "@/lib/email";
+import {
+  sendPastDueEmail,
+  sendBudgetApproachingEmail,
+  sendBudgetExceededEmail,
+  sendBudgetProjectedExceedEmail,
+} from "@/lib/email";
 import { parseLocalDate } from "@/lib/date-utils";
 import { autoRenewPastDueSubscriptions } from "@/lib/subscription-utils";
-import { getUserCurrency } from "@/lib/user-settings";
+import { getUserCurrency, getUserBudgetSettings } from "@/lib/user-settings";
+import {
+  checkBudgetStatus,
+  calculateProjectedSpending,
+  getBudgetPeriodInfo,
+} from "@/lib/budget-utils";
 
 export async function GET() {
   try {
@@ -124,14 +134,196 @@ export async function GET() {
     // Sort by spending (descending)
     categoryStats.sort((a, b) => b.monthlySpending - a.monthlySpending);
 
-    // Get user's currency preference
+    // Get user's currency preference and budget settings
     const currency = await getUserCurrency(userId);
+    const budgetSettings = await getUserBudgetSettings(userId);
+
+    // Calculate budget stats
+    const monthlyPeriod = getBudgetPeriodInfo("monthly");
+    const yearlyPeriod = getBudgetPeriodInfo("yearly");
+
+    const projectedMonthlySpending = calculateProjectedSpending(
+      totalMonthly,
+      monthlyPeriod.daysElapsed,
+      monthlyPeriod.totalDays
+    );
+
+    const projectedYearlySpending = calculateProjectedSpending(
+      totalYearlySpending,
+      yearlyPeriod.daysElapsed,
+      yearlyPeriod.totalDays
+    );
+
+    const monthlyStatus = budgetSettings.monthlyBudget
+      ? checkBudgetStatus(
+          totalMonthly,
+          budgetSettings.monthlyBudget,
+          budgetSettings.budgetAlertThreshold
+        )
+      : null;
+
+    const yearlyStatus = budgetSettings.yearlyBudget
+      ? checkBudgetStatus(
+          totalYearlySpending,
+          budgetSettings.yearlyBudget,
+          budgetSettings.budgetAlertThreshold
+        )
+      : null;
+
+    const monthlyPercentage = budgetSettings.monthlyBudget
+      ? (totalMonthly / budgetSettings.monthlyBudget) * 100
+      : null;
+
+    const yearlyPercentage = budgetSettings.yearlyBudget
+      ? (totalYearlySpending / budgetSettings.yearlyBudget) * 100
+      : null;
+
+    const monthlyRemaining = budgetSettings.monthlyBudget
+      ? budgetSettings.monthlyBudget - totalMonthly
+      : null;
+
+    const yearlyRemaining = budgetSettings.yearlyBudget
+      ? budgetSettings.yearlyBudget - totalYearlySpending
+      : null;
+
+    // Check and send budget alerts (non-blocking)
+    if (budgetSettings.monthlyBudget) {
+      // Monthly budget alerts
+      if (monthlyStatus === "approaching") {
+        sendBudgetApproachingEmail(
+          userId,
+          "monthly",
+          totalMonthly,
+          budgetSettings.monthlyBudget,
+          monthlyPercentage!,
+          currency
+        ).catch((error) => {
+          console.error(
+            "Error sending monthly budget approaching email (non-blocking):",
+            error
+          );
+        });
+      } else if (monthlyStatus === "exceeded") {
+        sendBudgetExceededEmail(
+          userId,
+          "monthly",
+          totalMonthly,
+          budgetSettings.monthlyBudget,
+          monthlyPercentage!,
+          currency
+        ).catch((error) => {
+          console.error(
+            "Error sending monthly budget exceeded email (non-blocking):",
+            error
+          );
+        });
+      }
+
+      // Check projected exceed
+      if (
+        projectedMonthlySpending > budgetSettings.monthlyBudget &&
+        monthlyStatus !== "exceeded"
+      ) {
+        sendBudgetProjectedExceedEmail(
+          userId,
+          "monthly",
+          projectedMonthlySpending,
+          budgetSettings.monthlyBudget,
+          currency
+        ).catch((error) => {
+          console.error(
+            "Error sending monthly budget projected exceed email (non-blocking):",
+            error
+          );
+        });
+      }
+    }
+
+    if (budgetSettings.yearlyBudget) {
+      // Yearly budget alerts
+      if (yearlyStatus === "approaching") {
+        sendBudgetApproachingEmail(
+          userId,
+          "yearly",
+          totalYearlySpending,
+          budgetSettings.yearlyBudget,
+          yearlyPercentage!,
+          currency
+        ).catch((error) => {
+          console.error(
+            "Error sending yearly budget approaching email (non-blocking):",
+            error
+          );
+        });
+      } else if (yearlyStatus === "exceeded") {
+        sendBudgetExceededEmail(
+          userId,
+          "yearly",
+          totalYearlySpending,
+          budgetSettings.yearlyBudget,
+          yearlyPercentage!,
+          currency
+        ).catch((error) => {
+          console.error(
+            "Error sending yearly budget exceeded email (non-blocking):",
+            error
+          );
+        });
+      }
+
+      // Check projected exceed
+      if (
+        projectedYearlySpending > budgetSettings.yearlyBudget &&
+        yearlyStatus !== "exceeded"
+      ) {
+        sendBudgetProjectedExceedEmail(
+          userId,
+          "yearly",
+          projectedYearlySpending,
+          budgetSettings.yearlyBudget,
+          currency
+        ).catch((error) => {
+          console.error(
+            "Error sending yearly budget projected exceed email (non-blocking):",
+            error
+          );
+        });
+      }
+    }
 
     return NextResponse.json({
       totalMonthly: parseFloat(totalMonthly.toFixed(2)),
       totalYearly: parseFloat(totalYearlySpending.toFixed(2)),
       totalActiveSubscriptions: activeSubscriptions.length,
       currency,
+      budget: {
+        monthlyBudget: budgetSettings.monthlyBudget,
+        yearlyBudget: budgetSettings.yearlyBudget,
+        monthlySpent: parseFloat(totalMonthly.toFixed(2)),
+        yearlySpent: parseFloat(totalYearlySpending.toFixed(2)),
+        monthlyRemaining:
+          monthlyRemaining !== null
+            ? parseFloat(monthlyRemaining.toFixed(2))
+            : null,
+        yearlyRemaining:
+          yearlyRemaining !== null
+            ? parseFloat(yearlyRemaining.toFixed(2))
+            : null,
+        monthlyPercentage:
+          monthlyPercentage !== null
+            ? parseFloat(monthlyPercentage.toFixed(2))
+            : null,
+        yearlyPercentage:
+          yearlyPercentage !== null
+            ? parseFloat(yearlyPercentage.toFixed(2))
+            : null,
+        monthlyStatus,
+        yearlyStatus,
+        projectedMonthlySpending: parseFloat(
+          projectedMonthlySpending.toFixed(2)
+        ),
+        projectedYearlySpending: parseFloat(projectedYearlySpending.toFixed(2)),
+      },
       upcomingRenewals: {
         next7Days: upcoming7Days.length,
         next30Days: upcoming30Days.length,

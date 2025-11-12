@@ -11,6 +11,7 @@ import {
 } from "@/lib/email";
 import { parseLocalDate } from "@/lib/date-utils";
 import { autoRenewPastDueSubscriptions } from "@/lib/subscription-utils";
+import { checkAndSendBudgetAlerts } from "@/lib/budget-alerts";
 
 export async function GET() {
   try {
@@ -174,6 +175,14 @@ export async function POST(request: Request) {
         });
       }
     }
+
+    // Check budget status and send alerts if needed (non-blocking)
+    checkAndSendBudgetAlerts(userId).catch((error) => {
+      console.error(
+        "Error checking budget alerts after subscription creation (non-blocking):",
+        error
+      );
+    });
 
     return NextResponse.json(createdSubscription, { status: 201 });
   } catch (error) {

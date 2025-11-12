@@ -25,12 +25,27 @@ import { motion } from "motion/react";
 import { SubscriptionIcon } from "./subscription-icon";
 import { useAppBadge } from "@/hooks/use-app-badge";
 import { formatCurrency } from "@/lib/currency-utils";
+import { BudgetCard } from "./budget-card";
 
 type SubscriptionStats = {
   totalMonthly: number;
   totalYearly: number;
   totalActiveSubscriptions: number;
   currency?: string;
+  budget?: {
+    monthlyBudget: number | null;
+    yearlyBudget: number | null;
+    monthlySpent: number;
+    yearlySpent: number;
+    monthlyRemaining: number | null;
+    yearlyRemaining: number | null;
+    monthlyPercentage: number | null;
+    yearlyPercentage: number | null;
+    monthlyStatus: "under" | "approaching" | "exceeded" | null;
+    yearlyStatus: "under" | "approaching" | "exceeded" | null;
+    projectedMonthlySpending: number;
+    projectedYearlySpending: number;
+  };
   upcomingRenewals: {
     next7Days: number;
     next30Days: number;
@@ -259,6 +274,11 @@ export default function FinancialOverview() {
       animate={{ opacity: 1 }}
       transition={{ duration: 0.3 }}
     >
+      {/* Budget Card */}
+      {stats.budget && (
+        <BudgetCard budget={stats.budget} currency={currency} />
+      )}
+
       {/* Summary Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
         {[
@@ -277,24 +297,76 @@ export default function FinancialOverview() {
             label: "Active",
             value: stats.totalActiveSubscriptions,
           },
-        ].map((card, index) => (
-          <motion.div
-            key={card.label}
-            className="py-6 px-4 hover:bg-muted/20 transition-colors rounded-lg"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.1, duration: 0.4 }}
-            whileHover={{ scale: 1.02, y: -2 }}
-          >
-            <div className="flex items-center gap-3 mb-2">
-              <card.icon className="w-5 h-5 text-muted-foreground" />
-              <span className="text-sm text-muted-foreground">
-                {card.label}
-              </span>
-            </div>
-            <div className="text-2xl font-semibold">{card.value}</div>
-          </motion.div>
-        ))}
+        ].map((card, index) => {
+          // Add budget context to monthly/yearly cards if budget is set
+          let displayValue = card.value;
+          if (stats.budget) {
+            if (card.label === "Monthly" && stats.budget.monthlyBudget) {
+              const percentage = stats.budget.monthlyPercentage;
+              const status = stats.budget.monthlyStatus;
+              displayValue = (
+                <div>
+                  <div>{formatCurrency(stats.totalMonthly, currency)}</div>
+                  <div className="text-xs text-muted-foreground mt-1">
+                    / {formatCurrency(stats.budget.monthlyBudget, currency)} (
+                    {percentage?.toFixed(1)}%)
+                  </div>
+                  {status === "approaching" && (
+                    <Badge variant="default" className="mt-1 text-xs">
+                      Approaching
+                    </Badge>
+                  )}
+                  {status === "exceeded" && (
+                    <Badge variant="destructive" className="mt-1 text-xs">
+                      Exceeded
+                    </Badge>
+                  )}
+                </div>
+              );
+            } else if (card.label === "Yearly" && stats.budget.yearlyBudget) {
+              const percentage = stats.budget.yearlyPercentage;
+              const status = stats.budget.yearlyStatus;
+              displayValue = (
+                <div>
+                  <div>{formatCurrency(stats.totalYearly, currency)}</div>
+                  <div className="text-xs text-muted-foreground mt-1">
+                    / {formatCurrency(stats.budget.yearlyBudget, currency)} (
+                    {percentage?.toFixed(1)}%)
+                  </div>
+                  {status === "approaching" && (
+                    <Badge variant="default" className="mt-1 text-xs">
+                      Approaching
+                    </Badge>
+                  )}
+                  {status === "exceeded" && (
+                    <Badge variant="destructive" className="mt-1 text-xs">
+                      Exceeded
+                    </Badge>
+                  )}
+                </div>
+              );
+            }
+          }
+
+          return (
+            <motion.div
+              key={card.label}
+              className="py-6 px-4 hover:bg-muted/20 transition-colors rounded-lg"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.1, duration: 0.4 }}
+              whileHover={{ scale: 1.02, y: -2 }}
+            >
+              <div className="flex items-center gap-3 mb-2">
+                <card.icon className="w-5 h-5 text-muted-foreground" />
+                <span className="text-sm text-muted-foreground">
+                  {card.label}
+                </span>
+              </div>
+              <div className="text-2xl font-semibold">{displayValue}</div>
+            </motion.div>
+          );
+        })}
       </div>
 
       {/* Upcoming Renewals */}

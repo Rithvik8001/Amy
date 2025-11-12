@@ -11,6 +11,7 @@ import {
 } from "@/lib/email";
 import { parseLocalDate } from "@/lib/date-utils";
 import { autoRenewPastDueSubscriptions } from "@/lib/subscription-utils";
+import { checkAndSendBudgetAlerts } from "@/lib/budget-alerts";
 
 // GET /api/subscriptions/[id] - Get single subscription
 export async function GET(
@@ -279,6 +280,21 @@ export async function PUT(
           );
         });
       }
+    }
+
+    // Check budget status and send alerts if needed (non-blocking)
+    // Only check if cost or status changed (affects spending totals)
+    if (
+      updateData.cost !== undefined ||
+      updateData.status !== undefined ||
+      updateData.billingCycle !== undefined
+    ) {
+      checkAndSendBudgetAlerts(userId).catch((error) => {
+        console.error(
+          "Error checking budget alerts after subscription update (non-blocking):",
+          error
+        );
+      });
     }
 
     return NextResponse.json(updatedSub);

@@ -14,6 +14,9 @@ export const emailNotificationTypeEnum = pgEnum("email_notification_type", [
   "renewal_reminder_1day",
   "price_change",
   "past_due",
+  "budget_approaching",
+  "budget_exceeded",
+  "budget_projected_exceed",
 ]);
 
 export const emailNotifications = pgTable(
@@ -21,7 +24,7 @@ export const emailNotifications = pgTable(
   {
     id: serial("id").primaryKey(),
     userId: varchar("user_id", { length: 255 }).notNull(), // Clerk user ID
-    subscriptionId: integer("subscription_id").notNull(),
+    subscriptionId: integer("subscription_id"), // Nullable for budget alerts (use 0 or null)
     type: emailNotificationTypeEnum("type").notNull(),
     sentAt: timestamp("sent_at").defaultNow().notNull(),
     metadata: jsonb("metadata"),

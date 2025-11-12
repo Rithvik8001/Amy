@@ -1,6 +1,3 @@
-/**
- * Supported currencies with their display names and symbols
- */
 export const SUPPORTED_CURRENCIES = [
   { code: "USD", name: "US Dollar", symbol: "$" },
   { code: "CAD", name: "Canadian Dollar", symbol: "C$" },
@@ -24,35 +21,23 @@ export const SUPPORTED_CURRENCIES = [
 
 export type CurrencyCode = (typeof SUPPORTED_CURRENCIES)[number]["code"];
 
-/**
- * Get list of supported currencies
- */
 export function getSupportedCurrencies() {
   return SUPPORTED_CURRENCIES;
 }
 
-/**
- * Get currency symbol for a currency code
- */
 export function getCurrencySymbol(currency: string): string {
   const currencyInfo = SUPPORTED_CURRENCIES.find((c) => c.code === currency);
   return currencyInfo?.symbol || "$";
 }
 
-/**
- * Get default currency (USD)
- */
 export function getDefaultCurrency(): string {
   return "USD";
 }
 
-/**
- * Format amount as currency using Intl.NumberFormat
- * @param amount - Amount to format (number)
- * @param currency - ISO currency code (default: USD)
- * @returns Formatted currency string
- */
-export function formatCurrency(amount: number, currency: string = "USD"): string {
+export function formatCurrency(
+  amount: number,
+  currency: string = "USD"
+): string {
   // Validate currency code
   const isValidCurrency = SUPPORTED_CURRENCIES.some((c) => c.code === currency);
   const currencyCode = isValidCurrency ? currency : "USD";
@@ -75,9 +60,6 @@ export function formatCurrency(amount: number, currency: string = "USD"): string
   }
 }
 
-/**
- * Format currency for display in selectors (e.g., "USD - $")
- */
 export function formatCurrencyForDisplay(currency: string): string {
   const currencyInfo = SUPPORTED_CURRENCIES.find((c) => c.code === currency);
   if (currencyInfo) {
@@ -85,4 +67,3 @@ export function formatCurrencyForDisplay(currency: string): string {
   }
   return currency;
 }
-
