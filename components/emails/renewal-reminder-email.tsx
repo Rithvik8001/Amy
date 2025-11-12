@@ -1,3 +1,5 @@
+import { formatCurrency } from "@/lib/currency-utils";
+
 export function getRenewalReminderEmailHtml(
   firstName: string | null,
   subscriptionName: string,
@@ -5,7 +7,8 @@ export function getRenewalReminderEmailHtml(
   billingCycle: string,
   nextBillingDate: string,
   dashboardUrl: string,
-  daysUntilRenewal: number = 3
+  daysUntilRenewal: number = 3,
+  currency: string = "USD"
 ): string {
   const displayName = firstName || "there";
   const formattedDate = new Date(nextBillingDate).toLocaleDateString("en-US", {
@@ -13,7 +16,7 @@ export function getRenewalReminderEmailHtml(
     day: "numeric",
     year: "numeric",
   });
-  const formattedCost = `$${parseFloat(cost).toFixed(2)}`;
+  const formattedCost = formatCurrency(parseFloat(cost), currency);
   const daysText = daysUntilRenewal === 1 ? "day" : "days";
 
   return `

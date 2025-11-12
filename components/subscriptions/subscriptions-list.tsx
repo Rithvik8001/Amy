@@ -11,6 +11,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { SubscriptionIcon } from "./subscription-icon";
 import { parseLocalDate } from "@/lib/date-utils";
 import { useAppBadge } from "@/hooks/use-app-badge";
+import { formatCurrency } from "@/lib/currency-utils";
 
 type Subscription = {
   id: number;
@@ -41,6 +42,7 @@ export default function SubscriptionsList() {
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [currency, setCurrency] = useState<string>("USD");
   const [filters, setFilters] = useState<FilterValues>({
     search: "",
     status: "all",
@@ -68,6 +70,23 @@ export default function SubscriptionsList() {
 
   useEffect(() => {
     fetchSubscriptions();
+  }, []);
+
+  // Fetch user currency preference
+  useEffect(() => {
+    const fetchCurrency = async () => {
+      try {
+        const response = await fetch("/api/user/settings");
+        if (response.ok) {
+          const data = await response.json();
+          setCurrency(data.currency || "USD");
+        }
+      } catch (error) {
+        console.error("Error fetching currency:", error);
+      }
+    };
+
+    fetchCurrency();
   }, []);
 
   // Update app badge with overdue and upcoming subscription counts
@@ -170,9 +189,6 @@ export default function SubscriptionsList() {
     );
   }
 
-  const formatCurrency = (amount: string) => {
-    return `$${parseFloat(amount).toFixed(2)}`;
-  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -297,7 +313,7 @@ export default function SubscriptionsList() {
                   <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0">
                     <div className="text-left sm:text-right">
                       <div className="text-lg sm:text-xl font-semibold">
-                        {formatCurrency(subscription.cost)}
+                        {formatCurrency(parseFloat(subscription.cost), currency)}
                       </div>
                       <div className="text-xs text-muted-foreground">
                         /{subscription.billingCycle}

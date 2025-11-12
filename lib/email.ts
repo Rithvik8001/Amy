@@ -3,6 +3,7 @@ import db from "@/db/config";
 import { emailNotifications } from "@/db/models/email-notifications";
 import { eq, and, gte, lt } from "drizzle-orm";
 import { getUserDetails } from "@/lib/clerk-helpers";
+import { getUserCurrency } from "@/lib/user-settings";
 import { getRenewalReminderEmailHtml } from "@/components/emails/renewal-reminder-email";
 import { getPriceChangeEmailHtml } from "@/components/emails/price-change-email";
 import { getPastDueEmailHtml } from "@/components/emails/past-due-email";
@@ -139,6 +140,9 @@ export async function sendRenewalReminderEmail(
       return false;
     }
 
+    // Get user's currency preference
+    const currency = await getUserCurrency(userId);
+
     // Generate email HTML
     const html = getRenewalReminderEmailHtml(
       userDetails.firstName,
@@ -147,7 +151,8 @@ export async function sendRenewalReminderEmail(
       subscription.billingCycle,
       subscription.nextBillingDate,
       getDashboardUrl(),
-      3 // 3 days
+      3, // 3 days
+      currency
     );
 
     // Send email via Resend
@@ -213,6 +218,9 @@ export async function sendRenewalReminder1DayEmail(
       return false;
     }
 
+    // Get user's currency preference
+    const currency = await getUserCurrency(userId);
+
     // Generate email HTML
     const html = getRenewalReminderEmailHtml(
       userDetails.firstName,
@@ -221,7 +229,8 @@ export async function sendRenewalReminder1DayEmail(
       subscription.billingCycle,
       subscription.nextBillingDate,
       getDashboardUrl(),
-      1 // 1 day
+      1, // 1 day
+      currency
     );
 
     // Send email via Resend
@@ -284,6 +293,9 @@ export async function sendPriceChangeEmail(
       return false;
     }
 
+    // Get user's currency preference
+    const currency = await getUserCurrency(userId);
+
     // Generate email HTML
     const html = getPriceChangeEmailHtml(
       userDetails.firstName,
@@ -291,7 +303,8 @@ export async function sendPriceChangeEmail(
       oldCost,
       newCost,
       subscription.billingCycle,
-      getDashboardUrl()
+      getDashboardUrl(),
+      currency
     );
 
     // Send email via Resend
@@ -360,6 +373,9 @@ export async function sendPastDueEmail(
       return false;
     }
 
+    // Get user's currency preference
+    const currency = await getUserCurrency(userId);
+
     // Generate email HTML
     const html = getPastDueEmailHtml(
       userDetails.firstName,
@@ -367,7 +383,8 @@ export async function sendPastDueEmail(
       subscription.cost,
       subscription.billingCycle,
       subscription.nextBillingDate,
-      getDashboardUrl()
+      getDashboardUrl(),
+      currency
     );
 
     // Send email via Resend

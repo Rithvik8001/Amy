@@ -2,6 +2,7 @@
 
 import dynamic from "next/dynamic";
 import { ModeToggle } from "@/components/theme-toggle";
+import { CurrencySelector } from "@/components/settings/currency-selector";
 
 const UserButton = dynamic(
   () => import("@clerk/nextjs").then((mod) => mod.UserButton),
@@ -18,6 +19,7 @@ export function NavActions({ userName }: NavActionsProps) {
       <span className="text-xs sm:text-sm text-muted-foreground hidden sm:block">
         {userName}
       </span>
+      <CurrencySelector />
       <ModeToggle />
       <UserButton />
     </div>

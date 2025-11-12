@@ -1,10 +1,13 @@
+import { formatCurrency } from "@/lib/currency-utils";
+
 export function getPastDueEmailHtml(
   firstName: string | null,
   subscriptionName: string,
   cost: string,
   billingCycle: string,
   nextBillingDate: string,
-  dashboardUrl: string
+  dashboardUrl: string,
+  currency: string = "USD"
 ): string {
   const displayName = firstName || "there";
 
@@ -21,7 +24,7 @@ export function getPastDueEmailHtml(
     day: "numeric",
     year: "numeric",
   });
-  const formattedCost = `$${parseFloat(cost).toFixed(2)}`;
+  const formattedCost = formatCurrency(parseFloat(cost), currency);
 
   // Calculate days past due correctly using local dates
   const daysPastDue = Math.floor(

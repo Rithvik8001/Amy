@@ -1,17 +1,20 @@
+import { formatCurrency } from "@/lib/currency-utils";
+
 export function getPriceChangeEmailHtml(
   firstName: string | null,
   subscriptionName: string,
   oldCost: string,
   newCost: string,
   billingCycle: string,
-  dashboardUrl: string
+  dashboardUrl: string,
+  currency: string = "USD"
 ): string {
   const displayName = firstName || "there";
-  const formattedOldCost = `$${parseFloat(oldCost).toFixed(2)}`;
-  const formattedNewCost = `$${parseFloat(newCost).toFixed(2)}`;
+  const formattedOldCost = formatCurrency(parseFloat(oldCost), currency);
+  const formattedNewCost = formatCurrency(parseFloat(newCost), currency);
   const costDifference = parseFloat(newCost) - parseFloat(oldCost);
   const isIncrease = costDifference > 0;
-  const formattedDifference = `$${Math.abs(costDifference).toFixed(2)}`;
+  const formattedDifference = formatCurrency(Math.abs(costDifference), currency);
 
   return `
 <!DOCTYPE html>

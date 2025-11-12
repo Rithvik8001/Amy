@@ -29,6 +29,13 @@
       "when": 1762735779640,
       "tag": "0003_complete_glorian",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1762907367336,
+      "tag": "0004_nasty_paibok",
+      "breakpoints": true
     }
   ]
 }

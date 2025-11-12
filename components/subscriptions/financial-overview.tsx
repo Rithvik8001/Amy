@@ -24,11 +24,13 @@ import { useTheme } from "next-themes";
 import { motion } from "motion/react";
 import { SubscriptionIcon } from "./subscription-icon";
 import { useAppBadge } from "@/hooks/use-app-badge";
+import { formatCurrency } from "@/lib/currency-utils";
 
 type SubscriptionStats = {
   totalMonthly: number;
   totalYearly: number;
   totalActiveSubscriptions: number;
+  currency?: string;
   upcomingRenewals: {
     next7Days: number;
     next30Days: number;
@@ -61,6 +63,7 @@ export default function FinancialOverview() {
   const [subscriptions, setSubscriptions] = useState<any[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [currency, setCurrency] = useState<string>("USD");
   const { resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [categoryColors, setCategoryColors] = useState<string[]>([]);
@@ -110,6 +113,10 @@ export default function FinancialOverview() {
       }
       const data = await response.json();
       setStats(data);
+      // Update currency from stats if available
+      if (data.currency) {
+        setCurrency(data.currency);
+      }
       setError(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
@@ -134,6 +141,23 @@ export default function FinancialOverview() {
   useEffect(() => {
     fetchStats();
     fetchSubscriptions();
+  }, []);
+
+  // Fetch user currency preference
+  useEffect(() => {
+    const fetchCurrency = async () => {
+      try {
+        const response = await fetch("/api/user/settings");
+        if (response.ok) {
+          const data = await response.json();
+          setCurrency(data.currency || "USD");
+        }
+      } catch (error) {
+        console.error("Error fetching currency:", error);
+      }
+    };
+
+    fetchCurrency();
   }, []);
 
   // Update app badge with overdue and upcoming subscription counts
@@ -178,9 +202,6 @@ export default function FinancialOverview() {
     );
   }
 
-  const formatCurrency = (amount: number) => {
-    return `$${amount.toFixed(2)}`;
-  };
 
   // Prepare chart data for stacked area chart - show next 3 months
   const prepareAreaChartData = () => {
@@ -244,12 +265,12 @@ export default function FinancialOverview() {
           {
             icon: DollarSign,
             label: "Monthly",
-            value: formatCurrency(stats.totalMonthly),
+            value: formatCurrency(stats.totalMonthly, currency),
           },
           {
             icon: TrendingUp,
             label: "Yearly",
-            value: formatCurrency(stats.totalYearly),
+            value: formatCurrency(stats.totalYearly, currency),
           },
           {
             icon: Package,
@@ -318,7 +339,7 @@ export default function FinancialOverview() {
                   </div>
                   <div className="text-left sm:text-right">
                     <div className="font-semibold text-sm sm:text-base">
-                      {formatCurrency(parseFloat(item.cost))}
+                      {formatCurrency(parseFloat(item.cost), currency)}
                     </div>
                     <div className="text-xs text-muted-foreground">
                       {format(new Date(item.nextBillingDate), "MMM dd, yyyy")}
@@ -406,7 +427,7 @@ export default function FinancialOverview() {
                       tickLine={false}
                       axisLine={false}
                       tickMargin={8}
-                      tickFormatter={(value) => `$${value}`}
+                      tickFormatter={(value) => formatCurrency(value, currency)}
                       tick={{ 
                         fill: resolvedTheme === "dark" 
                           ? "hsl(var(--muted-foreground))" 
@@ -417,7 +438,7 @@ export default function FinancialOverview() {
                     <ChartTooltip
                       content={
                         <ChartTooltipContent
-                          formatter={(value) => formatCurrency(Number(value))}
+                          formatter={(value) => formatCurrency(Number(value), currency)}
                         />
                       }
                     />
@@ -471,7 +492,7 @@ export default function FinancialOverview() {
                           </div>
                         </TableCell>
                         <TableCell className="text-right font-semibold">
-                          {formatCurrency(item.monthlySpending)}
+                          {formatCurrency(item.monthlySpending, currency)}
                         </TableCell>
                       </motion.tr>
                     ))}

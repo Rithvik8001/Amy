@@ -6,6 +6,7 @@ import { subscriptions } from "@/db/models/subscriptions";
 import { sendPastDueEmail } from "@/lib/email";
 import { parseLocalDate } from "@/lib/date-utils";
 import { autoRenewPastDueSubscriptions } from "@/lib/subscription-utils";
+import { getUserCurrency } from "@/lib/user-settings";
 
 export async function GET() {
   try {
@@ -123,10 +124,14 @@ export async function GET() {
     // Sort by spending (descending)
     categoryStats.sort((a, b) => b.monthlySpending - a.monthlySpending);
 
+    // Get user's currency preference
+    const currency = await getUserCurrency(userId);
+
     return NextResponse.json({
       totalMonthly: parseFloat(totalMonthly.toFixed(2)),
       totalYearly: parseFloat(totalYearlySpending.toFixed(2)),
       totalActiveSubscriptions: activeSubscriptions.length,
+      currency,
       upcomingRenewals: {
         next7Days: upcoming7Days.length,
         next30Days: upcoming30Days.length,
