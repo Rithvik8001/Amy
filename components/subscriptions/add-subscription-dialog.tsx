@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -25,6 +25,8 @@ import { Plus } from "lucide-react";
 import { toast } from "sonner";
 import { IconPicker } from "./icon-picker";
 import { TemplateSelector } from "./template-selector";
+import { AISubscriptionParser } from "./ai-subscription-parser";
+import { AIPreviewCard } from "./ai-preview-card";
 import { getTemplateById } from "@/lib/subscription-templates";
 import { addMonths, addYears, format } from "date-fns";
 
@@ -39,6 +41,21 @@ type SubscriptionFormData = {
   icon?: string;
 };
 
+type ParsedData = {
+  name?: string;
+  cost?: number;
+  billingCycle?: "monthly" | "yearly";
+  nextBillingDate?: string;
+  category?: string;
+  paymentMethod?: string;
+  icon?: string;
+};
+
+type MissingFields = {
+  required: string[];
+  optional: string[];
+};
+
 interface AddSubscriptionDialogProps {
   onSuccess: () => void;
 }
@@ -51,6 +68,11 @@ export default function AddSubscriptionDialog({
   const [selectedTemplateId, setSelectedTemplateId] = useState<
     string | undefined
   >();
+  const [previewData, setPreviewData] = useState<ParsedData | null>(null);
+  const [missingFields, setMissingFields] = useState<MissingFields | null>(
+    null
+  );
+  const [currency, setCurrency] = useState<string>("USD");
   const [formData, setFormData] = useState<SubscriptionFormData>({
     name: "",
     cost: "",
@@ -61,6 +83,22 @@ export default function AddSubscriptionDialog({
     paymentMethod: "",
     icon: undefined,
   });
+
+  // Fetch user currency on mount
+  useEffect(() => {
+    const fetchCurrency = async () => {
+      try {
+        const response = await fetch("/api/user/settings");
+        if (response.ok) {
+          const settings = await response.json();
+          setCurrency(settings.currency || "USD");
+        }
+      } catch (error) {
+        console.error("Error fetching currency:", error);
+      }
+    };
+    fetchCurrency();
+  }, []);
 
   // Calculate next billing date based on billing cycle
   const calculateNextBillingDate = (
@@ -83,6 +121,9 @@ export default function AddSubscriptionDialog({
   // Handle template selection
   const handleTemplateChange = (templateId: string | undefined) => {
     setSelectedTemplateId(templateId);
+    // Clear AI preview when template is selected
+    setPreviewData(null);
+    setMissingFields(null);
 
     if (templateId) {
       const template = getTemplateById(templateId);
@@ -113,6 +154,52 @@ export default function AddSubscriptionDialog({
         icon: undefined,
       });
     }
+  };
+
+  // Handle AI parsing result
+  const handleAIParsed = (data: ParsedData, missing: MissingFields) => {
+    setPreviewData(data);
+    setMissingFields(missing);
+    // Clear template selection when AI data is parsed
+    setSelectedTemplateId(undefined);
+  };
+
+  // Handle preview confirmation
+  const handlePreviewConfirm = () => {
+    if (!previewData || !missingFields) return;
+
+    // Only proceed if required fields are present
+    if (missingFields.required.length > 0) {
+      toast.error("Please provide all required fields");
+      return;
+    }
+
+    // Fill form with parsed data
+    const billingCycle = previewData.billingCycle || "monthly";
+    // Only use extracted date if available, otherwise leave empty (don't auto-calculate)
+    const nextBillingDate = previewData.nextBillingDate || "";
+
+    setFormData({
+      name: previewData.name || "",
+      cost: previewData.cost?.toString() || "",
+      billingCycle: billingCycle,
+      nextBillingDate: nextBillingDate,
+      category: previewData.category || "",
+      status: "active",
+      paymentMethod: previewData.paymentMethod || "",
+      icon: previewData.icon,
+    });
+
+    // Clear preview
+    setPreviewData(null);
+    setMissingFields(null);
+    toast.success("Form filled with AI data. Review and submit when ready.");
+  };
+
+  // Handle preview cancellation
+  const handlePreviewCancel = () => {
+    setPreviewData(null);
+    setMissingFields(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -170,6 +257,8 @@ export default function AddSubscriptionDialog({
     setOpen(isOpen);
     if (!isOpen) {
       setSelectedTemplateId(undefined);
+      setPreviewData(null);
+      setMissingFields(null);
       setFormData({
         name: "",
         cost: "",
@@ -205,6 +294,21 @@ export default function AddSubscriptionDialog({
               onValueChange={handleTemplateChange}
               id="template"
             />
+
+            {!selectedTemplateId && (
+              <>
+                <AISubscriptionParser onParsed={handleAIParsed} />
+                {previewData && missingFields && (
+                  <AIPreviewCard
+                    data={previewData}
+                    missingFields={missingFields}
+                    onConfirm={handlePreviewConfirm}
+                    onCancel={handlePreviewCancel}
+                    currency={currency}
+                  />
+                )}
+              </>
+            )}
 
             <div className="grid gap-2">
               <Label htmlFor="name">
