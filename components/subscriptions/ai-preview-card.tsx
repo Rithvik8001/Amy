@@ -1,7 +1,13 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { AlertCircle, CheckCircle2, Info } from "lucide-react";
 import { formatCurrency } from "@/lib/currency-utils";
@@ -30,6 +36,64 @@ interface AIPreviewCardProps {
   currency?: string;
 }
 
+interface FieldRowProps {
+  label: string;
+  value: string | number | undefined;
+  isMissing: boolean;
+  isRequired: boolean;
+  currency?: string;
+}
+
+function FieldRow({
+  label,
+  value,
+  isMissing,
+  isRequired,
+  currency = "USD",
+}: FieldRowProps) {
+  if (isMissing && !isRequired) {
+    return null; // Don't show optional missing fields
+  }
+
+  return (
+    <div className="flex items-start justify-between gap-4 py-2">
+      <div className="flex items-center gap-2">
+        <span className="text-sm font-medium">{label}</span>
+        {isMissing && isRequired && (
+          <Badge variant="destructive" className="text-xs">
+            <AlertCircle className="w-3 h-3 mr-1" />
+            Required
+          </Badge>
+        )}
+        {isMissing && !isRequired && (
+          <Badge variant="outline" className="text-xs">
+            <Info className="w-3 h-3 mr-1" />
+            Optional
+          </Badge>
+        )}
+      </div>
+      <div className="flex items-center gap-2">
+        {value !== undefined ? (
+          <>
+            {typeof value === "number" && label === "Cost" ? (
+              <span className="text-sm font-semibold">
+                {formatCurrency(value, currency)}
+              </span>
+            ) : (
+              <span className="text-sm">{String(value)}</span>
+            )}
+            {!isMissing && (
+              <CheckCircle2 className="w-4 h-4 text-green-600 dark:text-green-400" />
+            )}
+          </>
+        ) : (
+          <span className="text-sm text-muted-foreground">Not provided</span>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export function AIPreviewCard({
   data,
   missingFields,
@@ -39,60 +103,6 @@ export function AIPreviewCard({
 }: AIPreviewCardProps) {
   const hasRequiredFields = missingFields.required.length === 0;
   const hasOptionalFields = missingFields.optional.length > 0;
-
-  const FieldRow = ({
-    label,
-    value,
-    isMissing,
-    isRequired,
-  }: {
-    label: string;
-    value: string | number | undefined;
-    isMissing: boolean;
-    isRequired: boolean;
-  }) => {
-    if (isMissing && !isRequired) {
-      return null; // Don't show optional missing fields
-    }
-
-    return (
-      <div className="flex items-start justify-between gap-4 py-2">
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-medium">{label}</span>
-          {isMissing && isRequired && (
-            <Badge variant="destructive" className="text-xs">
-              <AlertCircle className="w-3 h-3 mr-1" />
-              Required
-            </Badge>
-          )}
-          {isMissing && !isRequired && (
-            <Badge variant="outline" className="text-xs">
-              <Info className="w-3 h-3 mr-1" />
-              Optional
-            </Badge>
-          )}
-        </div>
-        <div className="flex items-center gap-2">
-          {value !== undefined ? (
-            <>
-              {typeof value === "number" && label === "Cost" ? (
-                <span className="text-sm font-semibold">
-                  {formatCurrency(value, currency)}
-                </span>
-              ) : (
-                <span className="text-sm">{String(value)}</span>
-              )}
-              {!isMissing && (
-                <CheckCircle2 className="w-4 h-4 text-green-600 dark:text-green-400" />
-              )}
-            </>
-          ) : (
-            <span className="text-sm text-muted-foreground">Not provided</span>
-          )}
-        </div>
-      </div>
-    );
-  };
 
   return (
     <Card className="border-2">
@@ -113,7 +123,7 @@ export function AIPreviewCard({
       <CardContent className="space-y-2">
         {data.name && data.icon && (
           <div className="flex items-center gap-2 pb-2 border-b">
-            <SubscriptionIcon icon={data.icon} size={24} />
+            <SubscriptionIcon iconId={data.icon} name={data.name} size={24} />
             <span className="font-medium">{data.name}</span>
           </div>
         )}
@@ -123,36 +133,55 @@ export function AIPreviewCard({
           value={data.name}
           isMissing={missingFields.required.includes("name")}
           isRequired={true}
+          currency={currency}
         />
         <FieldRow
           label="Cost"
           value={data.cost}
           isMissing={missingFields.required.includes("cost")}
           isRequired={true}
+          currency={currency}
         />
         <FieldRow
           label="Billing Cycle"
-          value={data.billingCycle ? data.billingCycle.charAt(0).toUpperCase() + data.billingCycle.slice(1) : undefined}
+          value={
+            data.billingCycle
+              ? data.billingCycle.charAt(0).toUpperCase() +
+                data.billingCycle.slice(1)
+              : undefined
+          }
           isMissing={missingFields.required.includes("billingCycle")}
           isRequired={true}
+          currency={currency}
         />
         <FieldRow
           label="Next Billing Date"
-          value={data.nextBillingDate ? new Date(data.nextBillingDate).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" }) : undefined}
+          value={
+            data.nextBillingDate
+              ? new Date(data.nextBillingDate).toLocaleDateString("en-US", {
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                })
+              : undefined
+          }
           isMissing={missingFields.optional.includes("nextBillingDate")}
           isRequired={false}
+          currency={currency}
         />
         <FieldRow
           label="Category"
           value={data.category}
           isMissing={missingFields.optional.includes("category")}
           isRequired={false}
+          currency={currency}
         />
         <FieldRow
           label="Payment Method"
           value={data.paymentMethod}
           isMissing={missingFields.optional.includes("paymentMethod")}
           isRequired={false}
+          currency={currency}
         />
 
         {hasOptionalFields && (
@@ -193,4 +222,3 @@ export function AIPreviewCard({
     </Card>
   );
 }
-
