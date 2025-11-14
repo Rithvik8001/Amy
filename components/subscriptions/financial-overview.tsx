@@ -136,7 +136,8 @@ export default function FinancialOverview() {
   const fetchStats = async () => {
     try {
       setLoading(true);
-      const response = await fetch("/api/subscriptions/stats");
+      // Add cache-busting parameter to ensure fresh data
+      const response = await fetch(`/api/subscriptions/stats?t=${Date.now()}`);
       if (!response.ok) {
         throw new Error("Failed to fetch stats");
       }
@@ -279,7 +280,27 @@ export default function FinancialOverview() {
       animate={{ opacity: 1 }}
       transition={{ duration: 0.3 }}
     >
-      {stats.budget && <BudgetCard budget={stats.budget} currency={currency} />}
+      {stats.budget ? (
+        <BudgetCard budget={stats.budget} currency={currency} />
+      ) : (
+        <BudgetCard
+          budget={{
+            monthlyBudget: null,
+            yearlyBudget: null,
+            monthlySpent: stats.totalMonthly,
+            yearlySpent: stats.totalYearly,
+            monthlyRemaining: null,
+            yearlyRemaining: null,
+            monthlyPercentage: null,
+            yearlyPercentage: null,
+            monthlyStatus: null,
+            yearlyStatus: null,
+            projectedMonthlySpending: stats.totalMonthly,
+            projectedYearlySpending: stats.totalYearly,
+          }}
+          currency={currency}
+        />
+      )}
 
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
         {[

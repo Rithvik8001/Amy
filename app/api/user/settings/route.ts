@@ -56,15 +56,21 @@ export async function PUT(request: Request) {
       await setUserCurrency(userId, currency);
     }
 
-    if (
-      monthlyBudget !== undefined ||
-      yearlyBudget !== undefined ||
-      budgetAlertThreshold !== undefined
-    ) {
+    // Check if budget fields are explicitly provided (including null to clear)
+    const hasBudgetUpdate =
+      "monthlyBudget" in validationResult.data ||
+      "yearlyBudget" in validationResult.data ||
+      budgetAlertThreshold !== undefined;
+
+    if (hasBudgetUpdate) {
       await setUserBudgetSettings(
         userId,
-        monthlyBudget ?? undefined,
-        yearlyBudget ?? undefined,
+        "monthlyBudget" in validationResult.data
+          ? monthlyBudget ?? null
+          : undefined,
+        "yearlyBudget" in validationResult.data
+          ? yearlyBudget ?? null
+          : undefined,
         budgetAlertThreshold
       );
     }

@@ -62,12 +62,18 @@ export async function getUserBudgetSettings(
     const setting = settings[0];
     return {
       currency: setting.currency || getDefaultCurrency(),
-      monthlyBudget: setting.monthlyBudget
-        ? parseFloat(setting.monthlyBudget)
-        : null,
-      yearlyBudget: setting.yearlyBudget
-        ? parseFloat(setting.yearlyBudget)
-        : null,
+      monthlyBudget:
+        setting.monthlyBudget !== null &&
+        setting.monthlyBudget !== undefined &&
+        setting.monthlyBudget !== ""
+          ? parseFloat(setting.monthlyBudget)
+          : null,
+      yearlyBudget:
+        setting.yearlyBudget !== null &&
+        setting.yearlyBudget !== undefined &&
+        setting.yearlyBudget !== ""
+          ? parseFloat(setting.yearlyBudget)
+          : null,
       budgetAlertThreshold: setting.budgetAlertThreshold
         ? parseFloat(setting.budgetAlertThreshold)
         : 80,

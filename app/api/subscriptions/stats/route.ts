@@ -268,12 +268,64 @@ export async function GET() {
       }
     }
 
-    return NextResponse.json({
+    const responseData: {
+      totalMonthly: number;
+      totalYearly: number;
+      totalActiveSubscriptions: number;
+      currency: string;
+      budget?: {
+        monthlyBudget: number | null;
+        yearlyBudget: number | null;
+        monthlySpent: number;
+        yearlySpent: number;
+        monthlyRemaining: number | null;
+        yearlyRemaining: number | null;
+        monthlyPercentage: number | null;
+        yearlyPercentage: number | null;
+        monthlyStatus: "under" | "approaching" | "exceeded" | null;
+        yearlyStatus: "under" | "approaching" | "exceeded" | null;
+        projectedMonthlySpending: number;
+        projectedYearlySpending: number;
+      };
+      upcomingRenewals: {
+        next7Days: number;
+        next30Days: number;
+        items: Array<{
+          id: number;
+          name: string;
+          cost: string;
+          billingCycle: "monthly" | "yearly";
+          nextBillingDate: string;
+          category: string | null;
+        }>;
+      };
+      categoryBreakdown: Array<{
+        category: string;
+        monthlySpending: number;
+      }>;
+    } = {
       totalMonthly: parseFloat(totalMonthly.toFixed(2)),
       totalYearly: parseFloat(totalYearlySpending.toFixed(2)),
       totalActiveSubscriptions: activeSubscriptions.length,
       currency,
-      budget: {
+      upcomingRenewals: {
+        next7Days: upcoming7Days.length,
+        next30Days: upcoming30Days.length,
+        items: upcoming7Days.map((sub) => ({
+          id: sub.id,
+          name: sub.name,
+          cost: sub.cost,
+          billingCycle: sub.billingCycle,
+          nextBillingDate: sub.nextBillingDate,
+          category: sub.category,
+        })),
+      },
+      categoryBreakdown: categoryStats,
+    };
+
+    // Only include budget object if at least one budget is set
+    if (budgetSettings.monthlyBudget || budgetSettings.yearlyBudget) {
+      responseData.budget = {
         monthlyBudget: budgetSettings.monthlyBudget,
         yearlyBudget: budgetSettings.yearlyBudget,
         monthlySpent: parseFloat(totalMonthly.toFixed(2)),
@@ -300,21 +352,10 @@ export async function GET() {
           projectedMonthlySpending.toFixed(2)
         ),
         projectedYearlySpending: parseFloat(projectedYearlySpending.toFixed(2)),
-      },
-      upcomingRenewals: {
-        next7Days: upcoming7Days.length,
-        next30Days: upcoming30Days.length,
-        items: upcoming7Days.map((sub) => ({
-          id: sub.id,
-          name: sub.name,
-          cost: sub.cost,
-          billingCycle: sub.billingCycle,
-          nextBillingDate: sub.nextBillingDate,
-          category: sub.category,
-        })),
-      },
-      categoryBreakdown: categoryStats,
-    });
+      };
+    }
+
+    return NextResponse.json(responseData);
   } catch (error) {
     console.error("Error fetching subscription stats:", error);
     return NextResponse.json(

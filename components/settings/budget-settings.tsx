@@ -11,7 +11,29 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Sparkles, Loader2, Check, X, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { formatCurrency } from "@/lib/currency-utils";
+import type { BudgetRecommendations } from "@/lib/validations/budget-recommendations";
 
 type BudgetSettings = {
   currency: string;
@@ -39,6 +61,11 @@ export function BudgetSettings({
   const [saving, setSaving] = useState(false);
   const [monthlyBudgetInput, setMonthlyBudgetInput] = useState("");
   const [yearlyBudgetInput, setYearlyBudgetInput] = useState("");
+  const [recommendations, setRecommendations] =
+    useState<BudgetRecommendations | null>(null);
+  const [loadingRecommendations, setLoadingRecommendations] = useState(false);
+  const [showRecommendations, setShowRecommendations] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   useEffect(() => {
     const fetchSettings = async () => {
@@ -128,6 +155,47 @@ export function BudgetSettings({
     }
   };
 
+  const handleGetRecommendations = async () => {
+    try {
+      setLoadingRecommendations(true);
+      setShowRecommendations(false);
+
+      const response = await fetch("/api/ai/budget-recommendations", {
+        method: "POST",
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to get recommendations");
+      }
+
+      const data = await response.json();
+      if (data.success && data.data) {
+        setRecommendations(data.data);
+        setShowRecommendations(true);
+      } else {
+        throw new Error("Invalid response format");
+      }
+    } catch (error) {
+      console.error("Error getting budget recommendations:", error);
+      toast.error("Failed to get AI recommendations. Please try again.");
+    } finally {
+      setLoadingRecommendations(false);
+    }
+  };
+
+  const handleApplyRecommendations = () => {
+    if (!recommendations) return;
+
+    setMonthlyBudgetInput(recommendations.suggestedMonthlyBudget.toString());
+    setYearlyBudgetInput(recommendations.suggestedYearlyBudget.toString());
+    setShowRecommendations(false);
+    toast.success("Recommendations applied! Review and save when ready.");
+  };
+
+  const handleDismissRecommendations = () => {
+    setShowRecommendations(false);
+  };
+
   const handleClear = async () => {
     try {
       setSaving(true);
@@ -151,15 +219,24 @@ export function BudgetSettings({
       setSettings(updatedSettings);
       setMonthlyBudgetInput("");
       setYearlyBudgetInput("");
-      toast.success("Budget settings cleared");
+      setShowDeleteDialog(false);
+      toast.success("Budget deleted successfully");
 
-      if (onSave) {
-        onSave();
-      }
-
+      // Close dialog first
       if (onOpenChange) {
         onOpenChange(false);
       }
+
+      // Small delay to ensure API call completes and toast shows
+      setTimeout(() => {
+        // Trigger refresh via onSave callback (which reloads the page)
+        if (onSave) {
+          onSave();
+        } else {
+          // Fallback: force hard reload to clear any cached data
+          window.location.href = window.location.href;
+        }
+      }, 300);
     } catch (error) {
       toast.error("Failed to clear budget settings");
       console.error("Error clearing budget settings:", error);
@@ -190,6 +267,130 @@ export function BudgetSettings({
         </DialogHeader>
 
         <div className="space-y-6 py-4">
+          {/* AI Recommendations Section */}
+          <div className="space-y-3">
+            <div className="space-y-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={handleGetRecommendations}
+                disabled={loadingRecommendations}
+                className="w-full"
+              >
+                {loadingRecommendations ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Analyzing...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-4 h-4 mr-2" />
+                    {settings.monthlyBudget || settings.yearlyBudget
+                      ? "Review & Adjust Budget"
+                      : "Get AI Recommendation"}
+                  </>
+                )}
+              </Button>
+              <p className="text-xs text-muted-foreground px-1">
+                {settings.monthlyBudget || settings.yearlyBudget
+                  ? "AI will analyze your current spending and suggest adjustments to your existing budget"
+                  : "AI will analyze your spending patterns and suggest personalized budget amounts"}
+              </p>
+            </div>
+
+            {showRecommendations && recommendations && (
+              <Card className="border-primary/20 bg-primary/5">
+                <CardHeader>
+                  <div className="flex items-start justify-between">
+                    <div className="space-y-1">
+                      <CardTitle className="text-base">
+                        AI Budget Recommendations
+                      </CardTitle>
+                      <CardDescription>
+                        Based on your spending patterns
+                      </CardDescription>
+                    </div>
+                    <Badge
+                      variant={
+                        recommendations.confidence === "high"
+                          ? "default"
+                          : recommendations.confidence === "medium"
+                          ? "secondary"
+                          : "outline"
+                      }
+                      className="ml-2"
+                    >
+                      {recommendations.confidence} confidence
+                    </Badge>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium">
+                        Suggested Monthly Budget:
+                      </span>
+                      <span className="text-sm font-semibold">
+                        {formatCurrency(
+                          recommendations.suggestedMonthlyBudget,
+                          settings.currency
+                        )}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium">
+                        Suggested Yearly Budget:
+                      </span>
+                      <span className="text-sm font-semibold">
+                        {formatCurrency(
+                          recommendations.suggestedYearlyBudget,
+                          settings.currency
+                        )}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <p className="text-sm text-muted-foreground">
+                      {recommendations.reasoning}
+                    </p>
+                  </div>
+
+                  {recommendations.insights.length > 0 && (
+                    <div className="space-y-2">
+                      <p className="text-sm font-medium">Insights:</p>
+                      <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground">
+                        {recommendations.insights.map((insight, index) => (
+                          <li key={index}>{insight}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  <div className="flex gap-2 pt-2">
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={handleApplyRecommendations}
+                      className="flex-1"
+                    >
+                      <Check className="w-4 h-4 mr-2" />
+                      Apply Recommendations
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={handleDismissRecommendations}
+                    >
+                      <X className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+
           <div className="space-y-2">
             <Label htmlFor="monthly-budget">Monthly Budget</Label>
             <div className="relative">
@@ -257,16 +458,49 @@ export function BudgetSettings({
               Get alerts when you reach this percentage of your budget
             </p>
           </div>
+          {(settings.monthlyBudget || settings.yearlyBudget) && (
+            <div className="pt-2 border-t">
+              <AlertDialog
+                open={showDeleteDialog}
+                onOpenChange={setShowDeleteDialog}
+              >
+                <AlertDialogTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="sm"
+                    className="w-full"
+                    disabled={saving}
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Delete Budget
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete Budget?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This will permanently delete your monthly and yearly
+                      budget settings. You can set new budgets anytime. This
+                      action cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={handleClear}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    >
+                      Delete Budget
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
+          )}
+
           <div className="flex items-center justify-between gap-3 pt-4">
-            <Button
-              variant="outline"
-              onClick={handleClear}
-              disabled={
-                saving || (!settings.monthlyBudget && !settings.yearlyBudget)
-              }
-            >
-              Clear Budgets
-            </Button>
+            <div className="flex-1" />
             <div className="flex gap-2">
               {onOpenChange && (
                 <Button

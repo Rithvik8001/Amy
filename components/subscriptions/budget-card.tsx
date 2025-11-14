@@ -31,7 +31,16 @@ type BudgetCardProps = {
 export function BudgetCard({ budget, currency }: BudgetCardProps) {
   const [showSettings, setShowSettings] = useState(false);
 
-  if (!budget.monthlyBudget && !budget.yearlyBudget) {
+  // Check if budgets are null, undefined, or 0
+  const hasNoBudget =
+    (budget.monthlyBudget === null ||
+      budget.monthlyBudget === undefined ||
+      budget.monthlyBudget === 0) &&
+    (budget.yearlyBudget === null ||
+      budget.yearlyBudget === undefined ||
+      budget.yearlyBudget === 0);
+
+  if (hasNoBudget) {
     return (
       <>
         <div className="rounded-lg border bg-card p-6">
@@ -50,7 +59,8 @@ export function BudgetCard({ budget, currency }: BudgetCardProps) {
           onOpenChange={setShowSettings}
           onSave={() => {
             setShowSettings(false);
-            window.location.reload();
+            // Force hard reload to ensure fresh data
+            window.location.href = window.location.href;
           }}
         />
       </>

@@ -57,7 +57,8 @@ export function NavActions({ userName }: NavActionsProps) {
         onOpenChange={setShowBudgetSettings}
         onSave={() => {
           setShowBudgetSettings(false);
-          window.location.reload();
+          // Force hard reload to ensure fresh data
+          window.location.href = window.location.href;
         }}
       />
     </>
