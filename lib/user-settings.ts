@@ -11,11 +11,6 @@ export type UserBudgetSettings = {
   budgetAlertThreshold: number;
 };
 
-/**
- * Get user's currency preference (defaults to USD if not set)
- * @param userId - Clerk user ID
- * @returns Currency code (e.g., "USD")
- */
 export async function getUserCurrency(userId: string): Promise<string> {
   try {
     const settings = await db
@@ -35,11 +30,6 @@ export async function getUserCurrency(userId: string): Promise<string> {
   }
 }
 
-/**
- * Get user's full budget settings
- * @param userId - Clerk user ID
- * @returns Full settings object including budgets
- */
 export async function getUserBudgetSettings(
   userId: string
 ): Promise<UserBudgetSettings> {
@@ -89,18 +79,11 @@ export async function getUserBudgetSettings(
   }
 }
 
-/**
- * Set or update user's currency preference
- * Creates record if doesn't exist, updates if it does
- * @param userId - Clerk user ID
- * @param currency - ISO currency code
- */
 export async function setUserCurrency(
   userId: string,
   currency: string
 ): Promise<void> {
   try {
-    // Check if user settings exist
     const existing = await db
       .select()
       .from(userSettings)
@@ -108,7 +91,6 @@ export async function setUserCurrency(
       .limit(1);
 
     if (existing.length > 0) {
-      // Update existing record
       await db
         .update(userSettings)
         .set({
@@ -117,7 +99,6 @@ export async function setUserCurrency(
         })
         .where(eq(userSettings.userId, userId));
     } else {
-      // Create new record
       await db.insert(userSettings).values({
         userId,
         currency,
@@ -129,14 +110,6 @@ export async function setUserCurrency(
   }
 }
 
-/**
- * Set or update user's budget settings
- * Creates record if doesn't exist, updates if it does
- * @param userId - Clerk user ID
- * @param monthlyBudget - Monthly budget (null to clear)
- * @param yearlyBudget - Yearly budget (null to clear)
- * @param budgetAlertThreshold - Alert threshold percentage (optional)
- */
 export async function setUserBudgetSettings(
   userId: string,
   monthlyBudget?: number | null,
@@ -144,7 +117,6 @@ export async function setUserBudgetSettings(
   budgetAlertThreshold?: number
 ): Promise<void> {
   try {
-    // Check if user settings exist
     const existing = await db
       .select()
       .from(userSettings)
@@ -168,13 +140,11 @@ export async function setUserBudgetSettings(
     }
 
     if (existing.length > 0) {
-      // Update existing record
       await db
         .update(userSettings)
         .set(updateData)
         .where(eq(userSettings.userId, userId));
     } else {
-      // Create new record with defaults
       await db.insert(userSettings).values({
         userId,
         currency: getDefaultCurrency(),
@@ -197,4 +167,3 @@ export async function setUserBudgetSettings(
     throw error;
   }
 }
-
