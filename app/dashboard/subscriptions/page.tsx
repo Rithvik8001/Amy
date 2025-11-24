@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import SubscriptionsList from "@/components/subscriptions/subscriptions-list";
 import AddSubscriptionButton from "@/components/subscriptions/add-subscription-button";
 import ExportButton from "@/components/subscriptions/export-button";
+import CalendarExportButton from "@/components/subscriptions/calendar-export-button";
 import { SubscriptionsHeader } from "@/components/subscriptions-header";
 import { Logo } from "@/components/logo";
 import { NavActions } from "@/components/nav-actions";
@@ -63,6 +64,7 @@ export default async function SubscriptionsPage() {
               </Button>
             </Link>
             <ExportButton />
+            <CalendarExportButton />
           </div>
           <AddSubscriptionButton />
         </div>

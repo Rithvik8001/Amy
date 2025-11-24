@@ -26,6 +26,7 @@ import { SubscriptionIcon } from "./subscription-icon";
 import { useAppBadge } from "@/hooks/use-app-badge";
 import { formatCurrency } from "@/lib/currency-utils";
 import { BudgetCard } from "./budget-card";
+import AddToCalendarButton from "./add-to-calendar-button";
 
 type SubscriptionStats = {
   totalMonthly: number;
@@ -435,13 +436,27 @@ export default function FinancialOverview() {
                       </Badge>
                     )}
                   </div>
-                  <div className="text-left sm:text-right">
-                    <div className="font-semibold text-sm sm:text-base">
-                      {formatCurrency(parseFloat(item.cost), currency)}
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <div className="text-left sm:text-right">
+                      <div className="font-semibold text-sm sm:text-base">
+                        {formatCurrency(parseFloat(item.cost), currency)}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {format(new Date(item.nextBillingDate), "MMM dd, yyyy")}
+                      </div>
                     </div>
-                    <div className="text-xs text-muted-foreground">
-                      {format(new Date(item.nextBillingDate), "MMM dd, yyyy")}
-                    </div>
+                    <AddToCalendarButton
+                      subscription={{
+                        id: item.id,
+                        name: item.name,
+                        cost: item.cost,
+                        billingCycle: item.billingCycle,
+                        nextBillingDate: item.nextBillingDate,
+                        category: item.category,
+                        paymentMethod: null,
+                        status: "active",
+                      }}
+                    />
                   </div>
                 </div>
               </motion.div>

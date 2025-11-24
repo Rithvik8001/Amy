@@ -12,6 +12,7 @@ import { SubscriptionIcon } from "./subscription-icon";
 import { parseLocalDate } from "@/lib/date-utils";
 import { useAppBadge } from "@/hooks/use-app-badge";
 import { formatCurrency } from "@/lib/currency-utils";
+import AddToCalendarButton from "./add-to-calendar-button";
 
 type Subscription = {
   id: number;
@@ -327,6 +328,7 @@ export default function SubscriptionsList() {
                         </div>
                       </div>
                       <div className="flex items-center gap-1">
+                        <AddToCalendarButton subscription={subscription} />
                         <EditSubscriptionDialog
                           subscription={subscription}
                           onSuccess={fetchSubscriptions}
