@@ -11,6 +11,7 @@ import {
   analyzeSpendingPatterns,
   prepareAnalysisContext,
 } from "@/lib/budget-analysis";
+import { checkRateLimit, recordAiRequest } from "@/lib/rate-limit";
 
 export async function POST() {
   try {
@@ -18,6 +19,33 @@ export async function POST() {
 
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Check rate limit before processing
+    const rateLimit = await checkRateLimit(userId, "budget-recommendations");
+    
+    if (!rateLimit.allowed) {
+      const retryAfter = Math.ceil(
+        (rateLimit.resetAt.getTime() - Date.now()) / 1000
+      );
+      
+      return NextResponse.json(
+        {
+          error: "Rate limit exceeded",
+          message: `You've exceeded the limit of 25 requests per hour. Please try again later.`,
+          retryAfter,
+          resetAt: rateLimit.resetAt.toISOString(),
+        },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": retryAfter.toString(),
+            "X-RateLimit-Limit": "25",
+            "X-RateLimit-Remaining": "0",
+            "X-RateLimit-Reset": rateLimit.resetAt.toISOString(),
+          },
+        }
+      );
     }
 
     const userSubscriptions = await db
@@ -43,20 +71,41 @@ export async function POST() {
       const fallbackMonthly = 50; // Conservative estimate
       const fallbackYearly = fallbackMonthly * 12;
 
-      return NextResponse.json({
-        success: true,
-        data: {
-          suggestedMonthlyBudget: fallbackMonthly,
-          suggestedYearlyBudget: fallbackYearly,
-          reasoning:
-            "You don't have any active subscriptions yet. We've suggested a conservative starting budget. You can adjust this as you add subscriptions.",
-          confidence: "low",
-          insights: [
-            "Start with a conservative budget and adjust as you add subscriptions",
-            "Consider tracking your first few subscriptions to understand your spending patterns",
-          ],
-        },
+      // Record successful request (non-blocking)
+      recordAiRequest(userId, "budget-recommendations").catch((error) => {
+        console.error("Error recording AI request:", error);
       });
+
+      // Calculate remaining requests for headers
+      const updatedRateLimit = await checkRateLimit(
+        userId,
+        "budget-recommendations"
+      );
+      const remaining = updatedRateLimit.remaining - 1; // Subtract 1 for this request
+
+      return NextResponse.json(
+        {
+          success: true,
+          data: {
+            suggestedMonthlyBudget: fallbackMonthly,
+            suggestedYearlyBudget: fallbackYearly,
+            reasoning:
+              "You don't have any active subscriptions yet. We've suggested a conservative starting budget. You can adjust this as you add subscriptions.",
+            confidence: "low",
+            insights: [
+              "Start with a conservative budget and adjust as you add subscriptions",
+              "Consider tracking your first few subscriptions to understand your spending patterns",
+            ],
+          },
+        },
+        {
+          headers: {
+            "X-RateLimit-Limit": "25",
+            "X-RateLimit-Remaining": Math.max(0, remaining).toString(),
+            "X-RateLimit-Reset": updatedRateLimit.resetAt.toISOString(),
+          },
+        }
+      );
     }
 
     let confidence: "high" | "medium" | "low" = "medium";
@@ -170,35 +219,77 @@ Be practical and helpful. The recommendations should feel personalized and actio
         object.suggestedYearlyBudget = Math.round(correctedYearly * 100) / 100;
       }
 
-      return NextResponse.json({
-        success: true,
-        data: object,
+      // Record successful request (non-blocking)
+      recordAiRequest(userId, "budget-recommendations").catch((error) => {
+        console.error("Error recording AI request:", error);
       });
+
+      // Calculate remaining requests for headers
+      const updatedRateLimit = await checkRateLimit(
+        userId,
+        "budget-recommendations"
+      );
+      const remaining = updatedRateLimit.remaining - 1; // Subtract 1 for this request
+
+      return NextResponse.json(
+        {
+          success: true,
+          data: object,
+        },
+        {
+          headers: {
+            "X-RateLimit-Limit": "25",
+            "X-RateLimit-Remaining": Math.max(0, remaining).toString(),
+            "X-RateLimit-Reset": updatedRateLimit.resetAt.toISOString(),
+          },
+        }
+      );
     } catch (aiError) {
       console.error("AI error generating budget recommendations:", aiError);
 
       const fallbackMonthly = Math.ceil(analysis.totalMonthly * 1.2);
       const fallbackYearly = Math.ceil(analysis.totalYearly * 1.2);
 
-      return NextResponse.json({
-        success: true,
-        data: {
-          suggestedMonthlyBudget: fallbackMonthly,
-          suggestedYearlyBudget: fallbackYearly,
-          reasoning: `Based on your current monthly spending of ${analysis.totalMonthly} ${currency}, we suggest a monthly budget of ${fallbackMonthly} ${currency} (20% buffer for new subscriptions or price increases). Your yearly budget of ${fallbackYearly} ${currency} accounts for your current annual spending plus a buffer.`,
-          confidence: "medium",
-          insights: [
-            `You're currently spending ${analysis.totalMonthly} ${currency}/month on ${analysis.activeSubscriptionsCount} active subscriptions`,
-            analysis.highestSpendingCategories.length > 0
-              ? `Your highest spending category is ${
-                  analysis.highestSpendingCategories[0].category
-                } at ${analysis.highestSpendingCategories[0].amount.toFixed(
-                  2
-                )} ${currency}/month`
-              : "Consider categorizing your subscriptions for better insights",
-          ],
-        },
+      // Record successful request (non-blocking)
+      recordAiRequest(userId, "budget-recommendations").catch((error) => {
+        console.error("Error recording AI request:", error);
       });
+
+      // Calculate remaining requests for headers
+      const updatedRateLimit = await checkRateLimit(
+        userId,
+        "budget-recommendations"
+      );
+      const remaining = updatedRateLimit.remaining - 1; // Subtract 1 for this request
+
+      return NextResponse.json(
+        {
+          success: true,
+          data: {
+            suggestedMonthlyBudget: fallbackMonthly,
+            suggestedYearlyBudget: fallbackYearly,
+            reasoning: `Based on your current monthly spending of ${analysis.totalMonthly} ${currency}, we suggest a monthly budget of ${fallbackMonthly} ${currency} (20% buffer for new subscriptions or price increases). Your yearly budget of ${fallbackYearly} ${currency} accounts for your current annual spending plus a buffer.`,
+            confidence: "medium",
+            insights: [
+              `You're currently spending ${analysis.totalMonthly} ${currency}/month on ${analysis.activeSubscriptionsCount} active subscriptions`,
+              analysis.highestSpendingCategories.length > 0
+                ? `Your highest spending category is ${
+                    analysis.highestSpendingCategories[0].category
+                  } at ${analysis.highestSpendingCategories[0].amount.toFixed(
+                    2
+                  )} ${currency}/month`
+                : "Consider categorizing your subscriptions for better insights",
+            ],
+          },
+        },
+        {
+          headers: {
+            "X-RateLimit-Limit": "25",
+            "X-RateLimit-Remaining": Math.max(0, remaining).toString(),
+            "X-RateLimit-Reset": updatedRateLimit.resetAt.toISOString(),
+          },
+        }
+      );
     }
   } catch (error) {
     console.error("Error generating budget recommendations:", error);

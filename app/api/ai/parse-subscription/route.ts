@@ -4,6 +4,8 @@ import { generateObject } from "ai";
 import { openai } from "@ai-sdk/openai";
 import { getCategories } from "@/lib/subscription-templates";
 import { aiParsedSubscriptionSchema } from "@/lib/validations/ai-parsing";
+import { checkRateLimit, recordAiRequest } from "@/lib/rate-limit";
+import { validateAiInput } from "@/lib/content-validation";
 
 export async function POST(request: Request) {
   try {
@@ -13,11 +15,50 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    // Check rate limit before processing
+    const rateLimit = await checkRateLimit(userId, "parse-subscription");
+    
+    if (!rateLimit.allowed) {
+      const retryAfter = Math.ceil(
+        (rateLimit.resetAt.getTime() - Date.now()) / 1000
+      );
+      
+      return NextResponse.json(
+        {
+          error: "Rate limit exceeded",
+          message: `You've exceeded the limit of 25 requests per hour. Please try again later.`,
+          retryAfter,
+          resetAt: rateLimit.resetAt.toISOString(),
+        },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": retryAfter.toString(),
+            "X-RateLimit-Limit": "25",
+            "X-RateLimit-Remaining": "0",
+            "X-RateLimit-Reset": rateLimit.resetAt.toISOString(),
+          },
+        }
+      );
+    }
+
     const { text } = await request.json();
 
     if (!text || typeof text !== "string") {
       return NextResponse.json(
         { error: "Text input is required" },
+        { status: 400 }
+      );
+    }
+
+    // Validate content for malicious patterns
+    const validation = validateAiInput(text);
+    if (!validation.valid) {
+      return NextResponse.json(
+        {
+          error: "Invalid input",
+          message: validation.error || "Input contains prohibited content or exceeds maximum length.",
+        },
         { status: 400 }
       );
     }
@@ -89,14 +130,34 @@ If any information is missing or unclear, omit that field. Only extract what you
       );
     }
 
-    return NextResponse.json({
-      success: true,
-      data: object,
-      missingFields: {
-        required: requiredFields,
-        optional: optionalFields,
+    // Record successful request (non-blocking)
+    recordAiRequest(userId, "parse-subscription", text.length).catch(
+      (error) => {
+        console.error("Error recording AI request:", error);
+      }
+    );
+
+    // Calculate remaining requests for headers
+    const updatedRateLimit = await checkRateLimit(userId, "parse-subscription");
+    const remaining = updatedRateLimit.remaining - 1; // Subtract 1 for this request
+
+    return NextResponse.json(
+      {
+        success: true,
+        data: object,
+        missingFields: {
+          required: requiredFields,
+          optional: optionalFields,
+        },
       },
-    });
+      {
+        headers: {
+          "X-RateLimit-Limit": "25",
+          "X-RateLimit-Remaining": Math.max(0, remaining).toString(),
+          "X-RateLimit-Reset": updatedRateLimit.resetAt.toISOString(),
+        },
+      }
+    );
   } catch (error) {
     console.error("Error parsing subscription with AI:", error);
     return NextResponse.json(

@@ -43,6 +43,13 @@
       "when": 1762914777824,
       "tag": "0005_curly_eternals",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1764004640148,
+      "tag": "0006_yielding_sasquatch",
+      "breakpoints": true
     }
   ]
 }

@@ -165,7 +165,22 @@ export function BudgetSettings({
       });
 
       if (!response.ok) {
-        throw new Error("Failed to get recommendations");
+        const error = await response.json();
+        
+        // Handle rate limit errors specifically
+        if (response.status === 429) {
+          const retryAfter = error.retryAfter || 3600;
+          const minutes = Math.ceil(retryAfter / 60);
+          toast.error(
+            `Too many requests. Please try again in ${minutes} minute${minutes !== 1 ? "s" : ""}.`,
+            {
+              duration: 5000,
+            }
+          );
+          return;
+        }
+        
+        throw new Error(error.message || error.error || "Failed to get recommendations");
       }
 
       const data = await response.json();
@@ -177,7 +192,15 @@ export function BudgetSettings({
       }
     } catch (error) {
       console.error("Error getting budget recommendations:", error);
-      toast.error("Failed to get AI recommendations. Please try again.");
+      if (error instanceof Error && error.message.includes("Too many requests")) {
+        // Already handled above
+        return;
+      }
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to get AI recommendations. Please try again."
+      );
     } finally {
       setLoadingRecommendations(false);
     }

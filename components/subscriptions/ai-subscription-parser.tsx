@@ -25,6 +25,8 @@ interface AISubscriptionParserProps {
   onParsed: (data: ParsedData, missingFields: MissingFields) => void;
 }
 
+const MAX_INPUT_LENGTH = 2000;
+
 export function AISubscriptionParser({ onParsed }: AISubscriptionParserProps) {
   const [text, setText] = useState("");
   const [loading, setLoading] = useState(false);
@@ -32,6 +34,14 @@ export function AISubscriptionParser({ onParsed }: AISubscriptionParserProps) {
   const handleParse = async () => {
     if (!text.trim()) {
       toast.error("Please enter a subscription description");
+      return;
+    }
+
+    // Client-side length validation
+    if (text.length > MAX_INPUT_LENGTH) {
+      toast.error(
+        `Input exceeds maximum length of ${MAX_INPUT_LENGTH} characters`
+      );
       return;
     }
 
@@ -48,7 +58,27 @@ export function AISubscriptionParser({ onParsed }: AISubscriptionParserProps) {
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || "Failed to parse subscription");
+        
+        // Handle rate limit errors specifically
+        if (response.status === 429) {
+          const retryAfter = error.retryAfter || 3600;
+          const minutes = Math.ceil(retryAfter / 60);
+          toast.error(
+            `Too many requests. Please try again in ${minutes} minute${minutes !== 1 ? "s" : ""}.`,
+            {
+              duration: 5000,
+            }
+          );
+          return;
+        }
+        
+        // Handle validation errors
+        if (response.status === 400) {
+          toast.error(error.message || error.error || "Invalid input");
+          return;
+        }
+        
+        throw new Error(error.message || error.error || "Failed to parse subscription");
       }
 
       const result = await response.json();
@@ -60,6 +90,10 @@ export function AISubscriptionParser({ onParsed }: AISubscriptionParserProps) {
         throw new Error("Failed to parse subscription");
       }
     } catch (error) {
+      if (error instanceof Error && error.message.includes("Too many requests")) {
+        // Already handled above
+        return;
+      }
       toast.error(
         error instanceof Error ? error.message : "Failed to parse subscription"
       );
@@ -81,11 +115,22 @@ export function AISubscriptionParser({ onParsed }: AISubscriptionParserProps) {
           id="ai-input"
           placeholder="E.g., 'I pay $15.99 monthly for Netflix on my credit card'"
           value={text}
-          onChange={(e) => setText(e.target.value)}
+          onChange={(e) => {
+            // Enforce max length client-side
+            if (e.target.value.length <= MAX_INPUT_LENGTH) {
+              setText(e.target.value);
+            }
+          }}
           disabled={loading}
           className="min-h-[80px]"
+          maxLength={MAX_INPUT_LENGTH}
         />
       </div>
+      {text.length > MAX_INPUT_LENGTH * 0.9 && (
+        <p className="text-xs text-muted-foreground text-right">
+          {text.length} / {MAX_INPUT_LENGTH} characters
+        </p>
+      )}
       <Button
         type="button"
         onClick={handleParse}
